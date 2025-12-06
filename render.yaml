@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: chocotube
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: CHAT_SERVER_URL
+        sync: false
+
+  - type: web
+    name: chocotube-chat
+    runtime: node
+    buildCommand: npm install
+    startCommand: node chat_server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: CHAT_DATABASE_URL
+        sync: false
+      - key: PORT
+        value: 3001
