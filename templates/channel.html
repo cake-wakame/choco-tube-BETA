@@ -195,9 +195,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadMoreContainer = document.getElementById('load-more-container');
     let continuation = '{{ continuation|default("", true) }}';
     let isLoading = false;
+    const totalVideos = {{ total_videos|default(0, true) }};
+    let loadedCount = {{ videos|length }};
     
-    if (!continuation && loadMoreBtn) {
-        loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました</p>';
+    if (!continuation && totalVideos > 0 && loadedCount >= totalVideos && loadMoreBtn) {
+        loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました (' + loadedCount + '本)</p>';
+    } else if (!continuation && loadedCount > 0 && loadMoreBtn) {
+        loadMoreBtn.textContent = 'もっと読み込む';
     }
 
     function getCookie(name) {
@@ -271,12 +275,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 videos.forEach(function(video) {
                     const card = createVideoCard(video);
                     videoGrid.appendChild(card);
+                    loadedCount++;
                 });
                 
                 if (continuation && videos.length > 0) {
+                    loadMoreBtn.textContent = 'もっと読み込む';
                     loadMoreBtn.classList.remove('hidden');
+                } else if (videos.length === 0 && totalVideos > 0 && loadedCount >= totalVideos) {
+                    loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました (' + loadedCount + '本)</p>';
+                } else if (videos.length === 0) {
+                    loadMoreContainer.innerHTML = '<p class="no-more-videos">これ以上動画はありません (' + loadedCount + '本)</p>';
                 } else {
-                    loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました</p>';
+                    loadMoreBtn.textContent = 'もっと読み込む';
+                    loadMoreBtn.classList.remove('hidden');
                 }
                 
                 isLoading = false;
@@ -284,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(function(err) {
                 console.error('Error loading videos:', err);
+                loadMoreBtn.textContent = 'もっと読み込む (エラー: 再試行)';
                 loadMoreBtn.classList.remove('hidden');
                 loadingSpinner.classList.add('hidden');
                 isLoading = false;
