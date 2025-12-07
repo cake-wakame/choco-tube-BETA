@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}ツール - チョコTube{% endblock %}
+
+{% block content %}
+<div class="static-page">
+    <h1 class="page-title">その他のツール</h1>
+    
+    <div class="tool-grid">
+        <a href="/history" class="tool-card">
+            <div class="tool-icon">📜</div>
+            <div class="tool-content">
+                <h3 class="tool-title">再生履歴</h3>
+                <p class="tool-description">視聴した動画の履歴を確認</p>
+            </div>
+        </a>
+
+        <a href="/help" class="tool-card">
+            <div class="tool-icon">❓</div>
+            <div class="tool-content">
+                <h3 class="tool-title">ヘルプ</h3>
+                <p class="tool-description">使い方やよくある質問</p>
+            </div>
+        </a>
+
+        <a href="/blog" class="tool-card">
+            <div class="tool-icon">📝</div>
+            <div class="tool-content">
+                <h3 class="tool-title">ブログ</h3>
+                <p class="tool-description">お知らせや更新情報</p>
+            </div>
+        </a>
+
+        
+    </div>
+</div>
+{% endblock %}
