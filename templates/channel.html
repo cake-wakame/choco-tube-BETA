@@ -34,7 +34,7 @@
     </div>
 
     <div class="channel-tab-content" id="tab-videos">
-        <div class="video-grid">
+        <div class="video-grid" id="video-grid">
             {% for video in videos %}
             <a href="{{ '/watch' if vc == '1' else ('/w' if vc == '2' else ('/ume' if vc == '3' else '/edu')) }}?v={{ video.id }}" class="video-card">
                 <div class="thumbnail-container">
@@ -59,6 +59,12 @@
                 <p>動画が見つかりませんでした。</p>
             </div>
             {% endfor %}
+        </div>
+        <div class="load-more-container" id="load-more-container">
+            <button class="load-more-btn" id="load-more-btn">もっと読み込む</button>
+            <div class="loading-spinner hidden" id="loading-spinner">
+                <span>読み込み中...</span>
+            </div>
         </div>
     </div>
 
@@ -108,6 +114,63 @@
     {% endif %}
 </div>
 
+<style>
+.load-more-container {
+    text-align: center;
+    padding: 24px;
+    margin-top: 16px;
+}
+
+.load-more-btn {
+    padding: 12px 32px;
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.load-more-btn:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.load-more-btn:disabled {
+    background: var(--bg-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner span {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+.no-more-videos {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.channel-tab');
@@ -124,6 +187,112 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(targetId).classList.remove('hidden');
         });
     });
+
+    const channelId = '{{ channel_id }}';
+    const videoGrid = document.getElementById('video-grid');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    let continuation = '{{ continuation|default("", true) }}';
+    let isLoading = false;
+    
+    if (!continuation && loadMoreBtn) {
+        loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました</p>';
+    }
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+
+    function getVideoPath() {
+        const vc = getCookie('vc') || '1';
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            default: return '/edu';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function createVideoCard(video) {
+        const path = getVideoPath();
+        const a = document.createElement('a');
+        a.href = path + '?v=' + video.id;
+        a.className = 'video-card';
+        
+        let durationHtml = '';
+        if (video.length) {
+            durationHtml = '<span class="video-duration">' + escapeHtml(video.length) + '</span>';
+        }
+        
+        let metaHtml = '<span>' + escapeHtml(video.views || '') + '</span>';
+        if (video.published) {
+            metaHtml += '<span class="separator">•</span><span>' + escapeHtml(video.published) + '</span>';
+        }
+        
+        a.innerHTML = 
+            '<div class="thumbnail-container">' +
+                '<img src="/thumbnail?v=' + video.id + '" alt="' + escapeHtml(video.title) + '" class="thumbnail" loading="lazy">' +
+                durationHtml +
+            '</div>' +
+            '<div class="video-info">' +
+                '<h3 class="video-title">' + escapeHtml(video.title) + '</h3>' +
+                '<p class="video-meta">' + metaHtml + '</p>' +
+            '</div>';
+        
+        return a;
+    }
+
+    function loadMoreVideos() {
+        if (isLoading) return;
+        isLoading = true;
+        
+        loadMoreBtn.classList.add('hidden');
+        loadingSpinner.classList.remove('hidden');
+        
+        let url = '/api/channel/' + encodeURIComponent(channelId) + '/videos';
+        if (continuation) {
+            url += '?continuation=' + encodeURIComponent(continuation);
+        }
+        
+        fetch(url)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                const videos = data.videos || [];
+                continuation = data.continuation || '';
+                
+                videos.forEach(function(video) {
+                    const card = createVideoCard(video);
+                    videoGrid.appendChild(card);
+                });
+                
+                if (continuation && videos.length > 0) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました</p>';
+                }
+                
+                isLoading = false;
+                loadingSpinner.classList.add('hidden');
+            })
+            .catch(function(err) {
+                console.error('Error loading videos:', err);
+                loadMoreBtn.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                isLoading = false;
+            });
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreVideos);
+    }
 });
 </script>
 {% endblock %}
