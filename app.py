@@ -16,6 +16,11 @@ app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 app.secret_key = os.environ.get('SESSION_SECRET', os.environ.get('SECRET_KEY', 'choco-tube-secret-key-2025'))
 
+# セッションクッキーの設定（Render等のHTTPS環境で必要）
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('RENDER', False) or os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 PASSWORD = os.environ.get('APP_PASSWORD', 'choco')
 
 def login_required(f):
