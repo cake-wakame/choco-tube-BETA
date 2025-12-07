@@ -576,6 +576,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    (function saveToHistory() {
+        var videoId = '{{ video_id }}';
+        var videoTitle = '{{ video.title|default("", true)|replace("'", "\\'")|replace('"', '\\"') }}';
+        var videoAuthor = '{{ video.author|default("", true)|replace("'", "\\'")|replace('"', '\\"') }}';
+        
+        if (!videoId || !videoTitle) return;
+        
+        var history = JSON.parse(localStorage.getItem('chocoHistory') || '[]');
+        
+        history = history.filter(function(item) {
+            return item.id !== videoId;
+        });
+        
+        var now = new Date();
+        var watchedAt = now.getFullYear() + '/' + 
+                        String(now.getMonth() + 1).padStart(2, '0') + '/' + 
+                        String(now.getDate()).padStart(2, '0') + ' ' + 
+                        String(now.getHours()).padStart(2, '0') + ':' + 
+                        String(now.getMinutes()).padStart(2, '0');
+        
+        history.unshift({
+            id: videoId,
+            title: videoTitle,
+            author: videoAuthor,
+            watchedAt: watchedAt
+        });
+        
+        if (history.length > 100) {
+            history = history.slice(0, 100);
+        }
+        
+        localStorage.setItem('chocoHistory', JSON.stringify(history));
+    })();
 });
 </script>
 {% endblock %}
