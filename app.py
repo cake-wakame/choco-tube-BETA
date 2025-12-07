@@ -518,6 +518,12 @@ def login():
 @login_required
 def index():
     theme = request.cookies.get('theme', 'dark')
+    return render_template('home.html', theme=theme)
+
+@app.route('/trend')
+@login_required
+def trend():
+    theme = request.cookies.get('theme', 'dark')
     trending = get_trending()
     return render_template('index.html', videos=trending, theme=theme)
 
