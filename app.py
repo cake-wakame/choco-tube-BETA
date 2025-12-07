@@ -724,6 +724,18 @@ def channel(channel_id):
                          continuation=continuation,
                          total_videos=total_videos)
 
+@app.route('/tool')
+@login_required
+def tool_page():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('tool.html', theme=theme)
+
+@app.route('/history')
+@login_required
+def history_page():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('history.html', theme=theme)
+
 @app.route('/help')
 @login_required
 def help_page():
