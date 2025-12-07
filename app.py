@@ -16,7 +16,7 @@ app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 app.secret_key = os.environ.get('SESSION_SECRET', os.environ.get('SECRET_KEY', 'choco-tube-secret-key-2025'))
 
-PASSWORD = 'choco'
+PASSWORD = os.environ.get('APP_PASSWORD', 'choco')
 
 def login_required(f):
     @wraps(f)
@@ -281,6 +281,36 @@ def get_video_info(video_id):
         'streamUrls': stream_urls,
         'highstreamUrl': highstream_url,
         'audioUrl': audio_url
+    }
+
+def get_playlist_info(playlist_id):
+    path = f"/playlists/{urllib.parse.quote(playlist_id)}"
+    data = request_invidious_api(path, timeout=(5, 15))
+
+    if not data:
+        return None
+
+    videos = []
+    for item in data.get('videos', []):
+        length_seconds = item.get('lengthSeconds', 0)
+        videos.append({
+            'type': 'video',
+            'id': item.get('videoId', ''),
+            'title': item.get('title', ''),
+            'author': item.get('author', ''),
+            'authorId': item.get('authorId', ''),
+            'thumbnail': f"https://i.ytimg.com/vi/{item.get('videoId', '')}/hqdefault.jpg",
+            'length': str(datetime.timedelta(seconds=length_seconds)) if length_seconds else ''
+        })
+
+    return {
+        'title': data.get('title', ''),
+        'author': data.get('author', ''),
+        'authorId': data.get('authorId', ''),
+        'description': data.get('description', ''),
+        'videoCount': data.get('videoCount', 0),
+        'viewCount': data.get('viewCount', 0),
+        'videos': videos
     }
 
 def get_channel_info(channel_id):
@@ -615,6 +645,27 @@ def chat_page():
     theme = request.cookies.get('theme', 'dark')
     chat_server_url = os.environ.get('CHAT_SERVER_URL', '')
     return render_template('chat.html', theme=theme, chat_server_url=chat_server_url)
+
+@app.route('/playlist')
+@login_required
+def playlist_page():
+    playlist_id = request.args.get('list', '')
+    theme = request.cookies.get('theme', 'dark')
+    vc = request.cookies.get('vc', '1')
+
+    if not playlist_id:
+        return redirect(url_for('index'))
+
+    playlist_info = get_playlist_info(playlist_id)
+
+    if not playlist_info:
+        return render_template('playlist.html', playlist=None, videos=[], theme=theme, vc=vc)
+
+    return render_template('playlist.html',
+                         playlist=playlist_info,
+                         videos=playlist_info.get('videos', []),
+                         theme=theme,
+                         vc=vc)
 
 @app.route('/thumbnail')
 def thumbnail():
