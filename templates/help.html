@@ -1,22 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Help - チョコTube{% endblock %}
+{% block title %}ヘルプ - チョコTube{% endblock %}
 
 {% block content %}
 <div class="static-page">
-    <h1 class="page-title">Help</h1>
+    <h1 class="page-title">ヘルプ</h1>
     
     <div class="help-section">
         <h2>チョコTubeとは？</h2>
-        <p>チョコTubeは、ブロックされずにyoutubeを見ることのできるサイトです。<br>
-            ほかのyoutube視聴サイト(yuzutubeやyukitube)のような再生方法をとっています</p>
+        <p>チョコTubeは、ブロックされずにYouTubeを見ることのできるサイトです。<br>
+            ほかのYouTube視聴サイト（yuzutubeやyukitube）のような再生方法をとっています。</p>
+    </div>
+
+    <div class="help-section">
+        <h2>ホーム画面</h2>
+        <p>ログイン後に表示されるホーム画面では、以下の機能にアクセスできます：</p>
+        <ul>
+            <li><strong>訪問者カウンター：</strong>サイトへのアクセス数を表示</li>
+            <li><strong>チョコチャット：</strong>作るのにめっちゃ時間かかった</li>
+            <li><strong>トレンド：</strong>急上昇の人気動画をチェック</li>
+            <li><strong>その他のツール：</strong>ヘルプ、ブログ、再生履歴などへのリンク</li>
+        </ul>
     </div>
 
     <div class="help-section">
         <h2>動画の検索</h2>
-        <p>ヘッダーの検索ボックスにキーワードを入力して、見たい動画を探すことができます。<br>検索にはgoogleの公式APIキーとinvideosを使用</p>
+        <p>ヘッダーの検索ボックスにキーワードを入力して、見たい動画を探す<br>検索にはGoogle公式APIとInvidiousを使用</p>
         <ul>
-            <li>キーワードを入力して検索ボタンをクリック</li>
+            <li>キーワードを入力すると検索候補が表示されます</li>
             <li>動画、チャンネル、プレイリストが検索結果に表示されます</li>
         </ul>
     </div>
@@ -28,22 +39,22 @@
             <div class="help-card">
                 <div class="help-card-icon">🎬</div>
                 <h3>ストリーム</h3>
-                <p>google video comの埋め込みだね。音声もあるけど画質悪いな…</p>
+                <p>外部ストリームAPIを使用。音声もあるけど画質は控えめ。</p>
             </div>
             <div class="help-card">
                 <div class="help-card-icon">📺</div>
                 <h3>高画質</h3>
-                <p>高画質（720p/1080p）のWebM形式で再生します。音声がなくなること多いよ</p>
+                <p>高画質（720p/1080p）のWebM形式で再生。音声がなくなることが多いよ。</p>
             </div>
             <div class="help-card">
                 <div class="help-card-icon">🔗</div>
                 <h3>埋め込み</h3>
-                <p>YouTube nocookie埋め込みを使用します。使えない人が多そう。</p>
+                <p>YouTube nocookie埋め込みを使用。使えない人が多いかも。</p>
             </div>
             <div class="help-card">
                 <div class="help-card-icon">🎓</div>
                 <h3>Education</h3>
-                <p>YouTube Education埋め込みを使用します。パラメータはsiawaseさんのを使用させてもらってます。</p>
+                <p>YouTube Education埋め込みを使用。一番おすすめ！パラメータはsiawaseさんのを使用。</p>
             </div>
         </div>
     </div>
@@ -51,17 +62,28 @@
     <div class="help-section">
         <h2>再生オプション</h2>
         <ul>
-            <li><strong>ループ再生：</strong>動画を繰り返し再生します</li>
-            <li><strong>自動で次の動画へ：</strong>動画終了後、関連動画に自動で移動します</li>
-            <li><strong>画質選択：</strong>利用可能な画質から選択できます（対応動画のみ）音声消えることあるぜｗ</li>
+            <li><strong>ループ再生：</strong>動画を繰り返し再生</li>
+            <li><strong>自動で次の動画へ：</strong>動画終了後、関連動画に自動で移動</li>
+            <li><strong>画質選択：</strong>利用可能な画質から選択（対応動画のみ）</li>
+        </ul>
+    </div>
+
+    <div class="help-section">
+        <h2>再生履歴</h2>
+        <p>視聴した動画は自動的に再生履歴に保存されます。</p>
+        <ul>
+            <li>ホーム → その他のツール → 再生履歴 でアクセス</li>
+            <li>最大100件まで保存されます</li>
+            <li>履歴はブラウザに保存されるため、同じブラウザでのみ確認可能</li>
+            <li>「履歴をクリア」ボタンで全削除できます</li>
         </ul>
     </div>
 
     <div class="help-section">
         <h2>テーマの切り替え</h2>
-        <p>ヘッダー右上のボタンで、ダークモードとライトモードを切り替えられます。</p>
+        <p>ヘッダー右上のボタンで、ダークモードとライトモードの切り替え可</p>
         <ul>
-            <li>🌙 ダークモード</li>
+            <li>🌙 ダークモード（デフォルト）</li>
             <li>☀️ ライトモード</li>
         </ul>
     </div>
@@ -77,15 +99,35 @@
     </div>
 
     <div class="help-section">
+        <h2>その他のツール</h2>
+        <p>ホーム画面の「その他のツール」からアクセス可：</p>
+        <ul>
+            <li><strong>📜 再生履歴：</strong>動画の履歴を確認</li>
+            <li><strong>❓ ヘルプ：</strong>このページ（使い方やよくある質問）</li>
+            <li><strong>📝 ブログ：</strong>更新情報いや、やってないじゃん</li>
+            <li><strong>💬 チャット：</strong>作るのに1週間かかった…</li>
+        </ul>
+    </div>
+
+    <div class="help-section">
         <h2>トラブルシューティング</h2>
         <div class="faq-item">
             <h4>動画が再生できない場合</h4>
-            <p>「Educationを使うのが一番！siawaseさんのパラメータは更新頻度が高いからこの再生にしとけば問題なし=￣ω￣=＜ニャー</p>
+            <p>「Education」モードを使うのが一番おすすめ！siawaseさんのパラメータは更新頻度が高いから、これを選んでおけば問題なし。</p>
         </div>
         <div class="faq-item">
             <h4>画質が悪い場合</h4>
-            <p>「高画質」モードを選択してもいけど音声消えてもいいのぉ？。</p>
+            <p>「高画質」モードを選択できるけど、音声が消えることがあるので注意。</p>
         </div>
+        <div class="faq-item">
+            <h4>履歴が表示されない場合</h4>
+            <p>履歴はブラウザのローカルストレージに保存されています。プライベートブラウジングモードや、ブラウザのデータ削除を行うと履歴は消えます。</p>
+        </div>
+    </div>
+
+    <div class="help-section">
+        <h2>お問い合わせ</h2>
+        <p>何か意見や聞きたいことがあったら<a href="https://scratch.mit.edu/projects/1252869725" target="_blank" style="color: var(--accent-light);">こちらでコメント</a>してね。</p>
     </div>
 </div>
 {% endblock %}
