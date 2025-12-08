@@ -162,6 +162,26 @@
     font-size: 14px;
 }
 
+.watch-on-choco-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.watch-on-choco-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.4);
+}
+
 .download-options {
     display: none;
     margin-top: 24px;
@@ -346,6 +366,9 @@
                     <h3 class="preview-title" id="previewTitle"></h3>
                     <p class="preview-channel" id="previewChannel"></p>
                     <p class="preview-duration" id="previewDuration"></p>
+                    <a href="#" class="watch-on-choco-btn" id="watchOnChocoBtn">
+                        <span>🍫</span> チョコTubeで見る
+                    </a>
                 </div>
             </div>
         </div>
@@ -470,6 +493,7 @@ async function fetchVideoInfo() {
         document.getElementById('previewTitle').textContent = data.title || 'タイトル不明';
         document.getElementById('previewChannel').textContent = data.author || '';
         document.getElementById('previewDuration').textContent = data.lengthText ? `再生時間: ${data.lengthText}` : '';
+        document.getElementById('watchOnChocoBtn').href = `/watch?v=${videoId}`;
         
         document.getElementById('videoPreview').classList.add('show');
         document.getElementById('downloadOptions').classList.add('show');
