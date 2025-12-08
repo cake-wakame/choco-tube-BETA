@@ -770,6 +770,75 @@ def chat_page():
     chat_server_url = os.environ.get('CHAT_SERVER_URL', '')
     return render_template('chat.html', theme=theme, chat_server_url=chat_server_url)
 
+@app.route('/downloader')
+@login_required
+def downloader_page():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('downloader.html', theme=theme)
+
+@app.route('/api/video-info/<video_id>')
+@login_required
+def api_video_info(video_id):
+    info = get_video_info(video_id)
+    if not info:
+        return jsonify({'error': '動画情報を取得できませんでした'}), 404
+    return jsonify(info)
+
+@app.route('/api/download/<video_id>')
+@login_required
+def api_download(video_id):
+    format_type = request.args.get('format', 'video')
+    quality = request.args.get('quality', '720')
+    
+    if format_type == 'audio':
+        download_url = f"https://api.cobalt.tools/api/json"
+        try:
+            payload = {
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "vCodec": "h264",
+                "vQuality": "720",
+                "aFormat": "mp3",
+                "isAudioOnly": True
+            }
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            res = http_session.post(download_url, json=payload, headers=headers, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('url'):
+                    return redirect(data['url'])
+        except Exception as e:
+            print(f"Cobalt API error: {e}")
+        
+        fallback_url = f"https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128"
+        return redirect(fallback_url)
+    else:
+        download_url = f"https://api.cobalt.tools/api/json"
+        try:
+            payload = {
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "vCodec": "h264",
+                "vQuality": quality,
+                "aFormat": "mp3",
+                "isAudioOnly": False
+            }
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+            res = http_session.post(download_url, json=payload, headers=headers, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('url'):
+                    return redirect(data['url'])
+        except Exception as e:
+            print(f"Cobalt API error: {e}")
+        
+        fallback_url = f"https://dl.y2mate.is/mates/convert?id={video_id}&format=mp4&quality={quality}"
+        return redirect(fallback_url)
+
 @app.route('/playlist')
 @login_required
 def playlist_page():
