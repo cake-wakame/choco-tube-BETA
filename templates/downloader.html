@@ -323,6 +323,107 @@
     line-height: 1.5;
 }
 
+.method-section {
+    margin-bottom: 24px;
+}
+
+.method-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.method-btn {
+    padding: 14px 24px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.method-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.method-btn.active {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.external-service-info {
+    background: rgba(139, 69, 19, 0.1);
+    border: 1px solid rgba(139, 69, 19, 0.3);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.external-service-info p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+.external-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.download-btn-external {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    text-align: center;
+    text-decoration: none;
+    min-width: 180px;
+}
+
+.download-btn-external:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.download-btn-external.mp4-btn {
+    background: linear-gradient(135deg, #4A90D9, #357ABD);
+}
+
+.download-btn-external.mp3-btn {
+    background: linear-gradient(135deg, #50C878, #3CB371);
+}
+
+.download-btn-external.savefrom-btn {
+    background: linear-gradient(135deg, #FF6B35, #E55934);
+}
+
+.download-btn-external.freeytube-mp4-btn {
+    background: linear-gradient(135deg, #9B59B6, #8E44AD);
+}
+
+.download-btn-external.freeytube-mp3-btn {
+    background: linear-gradient(135deg, #E91E63, #C2185B);
+}
+
 @media (max-width: 768px) {
     .url-input-group {
         flex-direction: column;
@@ -386,27 +487,89 @@
         </div>
         
         <div class="download-options" id="downloadOptions">
-            <div class="quality-section" id="videoQualitySection">
-                <h4 class="quality-title">動画画質</h4>
-                <div class="quality-buttons" id="videoQualities">
-                    <button class="quality-btn selected" data-quality="720">720p</button>
-                    <button class="quality-btn" data-quality="480">480p</button>
-                    <button class="quality-btn" data-quality="360">360p</button>
+            <div class="method-section">
+                <h3 class="format-title">ダウンロード方法を選択</h3>
+                <div class="method-options">
+                    <button class="method-btn active" data-method="1" onclick="selectMethod('1')">
+                        <span>1️⃣</span> 方法1（内部API）
+                    </button>
+                    <button class="method-btn" data-method="2" onclick="selectMethod('2')">
+                        <span>2️⃣</span> 方法2（Y2Mate）
+                    </button>
+                    <button class="method-btn" data-method="3" onclick="selectMethod('3')">
+                        <span>3️⃣</span> 方法3（SaveFrom）
+                    </button>
+                    <button class="method-btn" data-method="4" onclick="selectMethod('4')">
+                        <span>4️⃣</span> 方法4（FreeYTube）
+                    </button>
                 </div>
             </div>
             
-            <div class="quality-section" id="audioQualitySection" style="display: none;">
-                <h4 class="quality-title">音声品質</h4>
-                <div class="quality-buttons" id="audioQualities">
-                    <button class="quality-btn selected" data-quality="320">320kbps</button>
-                    <button class="quality-btn" data-quality="192">192kbps</button>
-                    <button class="quality-btn" data-quality="128">128kbps</button>
+            <div id="method1Options">
+                <div class="quality-section" id="videoQualitySection">
+                    <h4 class="quality-title">動画画質</h4>
+                    <div class="quality-buttons" id="videoQualities">
+                        <button class="quality-btn selected" data-quality="720">720p</button>
+                        <button class="quality-btn" data-quality="480">480p</button>
+                        <button class="quality-btn" data-quality="360">360p</button>
+                    </div>
+                </div>
+                
+                <div class="quality-section" id="audioQualitySection" style="display: none;">
+                    <h4 class="quality-title">音声品質</h4>
+                    <div class="quality-buttons" id="audioQualities">
+                        <button class="quality-btn selected" data-quality="320">320kbps</button>
+                        <button class="quality-btn" data-quality="192">192kbps</button>
+                        <button class="quality-btn" data-quality="128">128kbps</button>
+                    </div>
+                </div>
+                
+                <a href="#" class="download-btn-main" id="downloadBtn1" onclick="startDownloadMethod1(event)">
+                    方法1でダウンロード
+                </a>
+            </div>
+            
+            <div id="method2Options" style="display: none;">
+                <div class="external-service-info">
+                    <p>Y2Mateを使用します。新しいタブで開きます。</p>
+                </div>
+                
+                <div class="external-buttons">
+                    <a href="#" class="download-btn-external mp4-btn" id="downloadBtnMp4" onclick="startDownloadMethod2('mp4', event)">
+                        <span>🎬</span> MP4でダウンロード
+                    </a>
+                    <a href="#" class="download-btn-external mp3-btn" id="downloadBtnMp3" onclick="startDownloadMethod2('mp3', event)">
+                        <span>🎵</span> MP3でダウンロード
+                    </a>
                 </div>
             </div>
             
-            <a href="#" class="download-btn-main" id="downloadBtn" onclick="startDownload(event)">
-                ダウンロード開始
-            </a>
+            <div id="method3Options" style="display: none;">
+                <div class="external-service-info">
+                    <p>SaveFromを使用します。新しいタブで開きます。</p>
+                </div>
+                
+                <div class="external-buttons">
+                    <a href="#" class="download-btn-external savefrom-btn" id="downloadBtnSaveFrom" onclick="startDownloadMethod3(event)">
+                        <span>💾</span> SaveFromでダウンロード
+                    </a>
+                </div>
+            </div>
+            
+            <div id="method4Options" style="display: none;">
+                <div class="external-service-info">
+                    <p>FreeYTubeDownloaderを使用します。新しいタブで開きます。</p>
+                </div>
+                
+                <div class="external-buttons">
+                    <a href="#" class="download-btn-external freeytube-mp4-btn" id="downloadBtnFreeYTubeMp4" onclick="startDownloadMethod4('mp4', event)">
+                        <span>🎬</span> MP4でダウンロード
+                    </a>
+                    <a href="#" class="download-btn-external freeytube-mp3-btn" id="downloadBtnFreeYTubeMp3" onclick="startDownloadMethod4('mp3', event)">
+                        <span>🎵</span> MP3でダウンロード
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -430,6 +593,7 @@
 let currentVideoId = '';
 let selectedFormat = 'video';
 let selectedQuality = '720';
+let selectedMethod = '1';
 
 function extractVideoId(url) {
     const patterns = [
@@ -524,6 +688,19 @@ function selectFormat(format) {
     }
 }
 
+function selectMethod(method) {
+    selectedMethod = method;
+    
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.method === method);
+    });
+    
+    document.getElementById('method1Options').style.display = method === '1' ? 'block' : 'none';
+    document.getElementById('method2Options').style.display = method === '2' ? 'block' : 'none';
+    document.getElementById('method3Options').style.display = method === '3' ? 'block' : 'none';
+    document.getElementById('method4Options').style.display = method === '4' ? 'block' : 'none';
+}
+
 function updateQualitySelection(containerId, quality) {
     document.querySelectorAll(`#${containerId} .quality-btn`).forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.quality === quality);
@@ -539,7 +716,7 @@ document.querySelectorAll('.quality-btn').forEach(btn => {
     });
 });
 
-function startDownload(event) {
+function startDownloadMethod1(event) {
     event.preventDefault();
     
     if (!currentVideoId) {
@@ -549,6 +726,55 @@ function startDownload(event) {
     
     const downloadUrl = `/api/download/${currentVideoId}?format=${selectedFormat}&quality=${selectedQuality}`;
     window.open(downloadUrl, '_blank');
+}
+
+function startDownloadMethod2(format, event) {
+    event.preventDefault();
+    
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+    
+    const youtubeUrl = `https://www.youtube.com/watch?v=${currentVideoId}`;
+    let externalUrl = '';
+    
+    if (format === 'mp3') {
+        externalUrl = `https://www.y2mate.com/youtube-mp3/${currentVideoId}`;
+    } else {
+        externalUrl = `https://www.y2mate.com/youtube/${currentVideoId}`;
+    }
+    
+    window.open(externalUrl, '_blank');
+}
+
+function startDownloadMethod3(event) {
+    event.preventDefault();
+    
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+    
+    const externalUrl = `https://ssyoutube.com/ja/youtube-video-downloader?url=https://www.youtube.com/watch?v=${currentVideoId}`;
+    window.open(externalUrl, '_blank');
+}
+
+function startDownloadMethod4(format, event) {
+    event.preventDefault();
+    
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+    
+    let externalUrl = '';
+    if (format === 'mp3') {
+        externalUrl = `https://freeytubedownloader.com/mp3?url=https://www.youtube.com/watch?v=${currentVideoId}`;
+    } else {
+        externalUrl = `https://freeytubedownloader.com/mp4?url=https://www.youtube.com/watch?v=${currentVideoId}`;
+    }
+    window.open(externalUrl, '_blank');
 }
 
 document.getElementById('videoUrl').addEventListener('keypress', function(e) {
