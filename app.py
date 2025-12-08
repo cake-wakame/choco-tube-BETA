@@ -736,6 +736,12 @@ def history_page():
     theme = request.cookies.get('theme', 'dark')
     return render_template('history.html', theme=theme)
 
+@app.route('/favorite')
+@login_required
+def favorite_page():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('favorite.html', theme=theme)
+
 @app.route('/help')
 @login_required
 def help_page():
