@@ -134,13 +134,16 @@
                 </label>
             </div>
 
-            {% if video.videoUrls and video.videoUrls[0] %}
-            <div class="download-section">
+            <div class="action-buttons">
+                <button class="favorite-btn" id="favoriteBtn" data-video-id="{{ video_id }}" data-video-title="{{ video.title }}" data-video-author="{{ video.author }}">
+                    <span class="favorite-icon">☆</span> お気に入りに追加
+                </button>
+                {% if video.videoUrls and video.videoUrls[0] %}
                 <a href="{{ video.videoUrls[0] }}" download="{{ video.title }}" class="download-btn">
                     ⬇️ ダウンロード
                 </a>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
 
         <div class="comments-section">
@@ -609,6 +612,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         localStorage.setItem('chocoHistory', JSON.stringify(history));
+    })();
+
+    (function initFavoriteButton() {
+        var favoriteBtn = document.getElementById('favoriteBtn');
+        if (!favoriteBtn) return;
+        
+        var videoId = favoriteBtn.getAttribute('data-video-id');
+        var videoTitle = favoriteBtn.getAttribute('data-video-title');
+        var videoAuthor = favoriteBtn.getAttribute('data-video-author');
+        
+        function updateButtonState() {
+            var favorites = JSON.parse(localStorage.getItem('chocoFavorites') || '[]');
+            var isFavorite = favorites.some(function(item) { return item.id === videoId; });
+            
+            if (isFavorite) {
+                favoriteBtn.innerHTML = '<span class="favorite-icon">★</span> お気に入り済み';
+                favoriteBtn.classList.add('favorited');
+            } else {
+                favoriteBtn.innerHTML = '<span class="favorite-icon">☆</span> お気に入りに追加';
+                favoriteBtn.classList.remove('favorited');
+            }
+        }
+        
+        favoriteBtn.addEventListener('click', function() {
+            var favorites = JSON.parse(localStorage.getItem('chocoFavorites') || '[]');
+            var isFavorite = favorites.some(function(item) { return item.id === videoId; });
+            
+            if (isFavorite) {
+                favorites = favorites.filter(function(item) { return item.id !== videoId; });
+            } else {
+                var now = new Date();
+                var addedAt = now.getFullYear() + '/' + 
+                              String(now.getMonth() + 1).padStart(2, '0') + '/' + 
+                              String(now.getDate()).padStart(2, '0') + ' ' + 
+                              String(now.getHours()).padStart(2, '0') + ':' + 
+                              String(now.getMinutes()).padStart(2, '0');
+                
+                favorites.unshift({
+                    id: videoId,
+                    title: videoTitle,
+                    author: videoAuthor,
+                    addedAt: addedAt
+                });
+                
+                if (favorites.length > 100) {
+                    favorites = favorites.slice(0, 100);
+                }
+            }
+            
+            localStorage.setItem('chocoFavorites', JSON.stringify(favorites));
+            updateButtonState();
+        });
+        
+        updateButtonState();
     })();
 });
 </script>
