@@ -876,15 +876,34 @@ def api_internal_download(video_id):
     cleanup_old_downloads()
     
     unique_id = f"{video_id}_{int(time.time())}"
+    cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_{unique_id}.txt')
     
     try:
+        cookies_content = """# Netscape HTTP Cookie File
+.youtube.com    TRUE    /       TRUE    2147483647      CONSENT YES+cb
+.youtube.com    TRUE    /       TRUE    2147483647      PREF    hl=ja&gl=JP
+"""
+        with open(cookie_file, 'w') as f:
+            f.write(cookies_content)
+        
+        base_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'cookiefile': cookie_file,
+            'http_headers': {
+                'User-Agent': random.choice(USER_AGENTS),
+                'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
+            },
+            'socket_timeout': 30,
+            'retries': 3,
+        }
+        
         if format_type == 'mp3':
             output_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.mp3')
             ydl_opts = {
-                'format': 'bestaudio/best',
+                **base_opts,
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
                 'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.%(ext)s'),
-                'quiet': True,
-                'no_warnings': True,
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -895,16 +914,18 @@ def api_internal_download(video_id):
             output_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.mp4')
             format_string = f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'
             ydl_opts = {
+                **base_opts,
                 'format': format_string,
                 'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.%(ext)s'),
-                'quiet': True,
-                'no_warnings': True,
                 'merge_output_format': 'mp4',
             }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
-            title = sanitize_filename(info.get('title', video_id))
+            title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        if os.path.exists(cookie_file):
+            os.remove(cookie_file)
         
         if format_type == 'mp3':
             if os.path.exists(output_path):
@@ -948,10 +969,87 @@ def api_internal_download(video_id):
             
     except Exception as e:
         print(f"Internal download error: {e}")
+        if os.path.exists(cookie_file):
+            try:
+                os.remove(cookie_file)
+            except:
+                pass
         return jsonify({
             'success': False,
             'error': f'ダウンロードエラー: {str(e)}'
         }), 500
+
+@app.route('/api/stream/<video_id>')
+@login_required
+def api_stream(video_id):
+    try:
+        stream_url = f"https://siawaseok.duckdns.org/api/stream/{video_id}/type2"
+        res = http_session.get(stream_url, headers=get_random_headers(), timeout=15)
+        if res.status_code == 200:
+            data = res.json()
+            return jsonify(data)
+        else:
+            return jsonify({'error': 'ストリームデータの取得に失敗しました'}), res.status_code
+    except Exception as e:
+        print(f"Stream API error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/lite-download/<video_id>')
+@login_required
+def api_lite_download(video_id):
+    format_type = request.args.get('format', 'mp4')
+    quality = request.args.get('quality', '360')
+    
+    try:
+        stream_url = f"https://siawaseok.duckdns.org/api/stream/{video_id}/type2"
+        res = http_session.get(stream_url, headers=get_random_headers(), timeout=15)
+        
+        if res.status_code != 200:
+            return jsonify({'error': 'ストリームデータの取得に失敗しました', 'success': False}), 500
+        
+        data = res.json()
+        videourl = data.get('videourl', {})
+        
+        if format_type == 'mp3':
+            audio_url = None
+            for q in ['144p', '240p', '360p']:
+                if q in videourl and videourl[q].get('audio', {}).get('url'):
+                    audio_url = videourl[q]['audio']['url']
+                    break
+            
+            if audio_url:
+                return jsonify({
+                    'success': True,
+                    'url': audio_url,
+                    'format': 'audio',
+                    'quality': 'audio'
+                })
+            else:
+                return jsonify({'error': '音声URLが見つかりませんでした', 'success': False}), 404
+        else:
+            quality_order = [quality + 'p', '360p', '480p', '720p', '240p', '144p']
+            video_url = None
+            actual_quality = None
+            
+            for q in quality_order:
+                if q in videourl and videourl[q].get('video', {}).get('url'):
+                    video_url = videourl[q]['video']['url']
+                    actual_quality = q
+                    break
+            
+            if video_url:
+                return jsonify({
+                    'success': True,
+                    'url': video_url,
+                    'format': 'video',
+                    'quality': actual_quality
+                })
+            else:
+                return jsonify({'error': '動画URLが見つかりませんでした', 'success': False}), 404
+                
+    except Exception as e:
+        print(f"Lite download error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
 
 @app.route('/playlist')
 @login_required
