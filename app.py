@@ -7,10 +7,14 @@ import urllib.parse
 import datetime
 import random
 import time
+import tempfile
+import subprocess
+import re
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Flask, render_template, request, jsonify, Response, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, Response, redirect, url_for, session, send_file
 from functools import wraps
+import yt_dlp
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -838,6 +842,116 @@ def api_download(video_id):
         
         fallback_url = f"https://dl.y2mate.is/mates/convert?id={video_id}&format=mp4&quality={quality}"
         return redirect(fallback_url)
+
+DOWNLOAD_DIR = tempfile.gettempdir()
+
+def sanitize_filename(filename):
+    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+    filename = filename.strip()
+    if len(filename) > 100:
+        filename = filename[:100]
+    return filename
+
+def cleanup_old_downloads():
+    try:
+        current_time = time.time()
+        for f in os.listdir(DOWNLOAD_DIR):
+            if f.startswith('chocotube_') and (f.endswith('.mp4') or f.endswith('.mp3')):
+                filepath = os.path.join(DOWNLOAD_DIR, f)
+                if os.path.isfile(filepath):
+                    file_age = current_time - os.path.getmtime(filepath)
+                    if file_age > 600:
+                        os.remove(filepath)
+    except Exception as e:
+        print(f"Cleanup error: {e}")
+
+@app.route('/api/internal-download/<video_id>')
+@login_required
+def api_internal_download(video_id):
+    format_type = request.args.get('format', 'mp4')
+    quality = request.args.get('quality', '720')
+    
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    
+    cleanup_old_downloads()
+    
+    unique_id = f"{video_id}_{int(time.time())}"
+    
+    try:
+        if format_type == 'mp3':
+            output_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.mp3')
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.%(ext)s'),
+                'quiet': True,
+                'no_warnings': True,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+        else:
+            output_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.mp4')
+            format_string = f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'
+            ydl_opts = {
+                'format': format_string,
+                'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.%(ext)s'),
+                'quiet': True,
+                'no_warnings': True,
+                'merge_output_format': 'mp4',
+            }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            title = sanitize_filename(info.get('title', video_id))
+        
+        if format_type == 'mp3':
+            if os.path.exists(output_path):
+                return send_file(
+                    output_path,
+                    as_attachment=True,
+                    download_name=f"{title}.mp3",
+                    mimetype='audio/mpeg'
+                )
+            for ext in ['mp3', 'm4a', 'webm', 'opus']:
+                check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.{ext}')
+                if os.path.exists(check_path):
+                    return send_file(
+                        check_path,
+                        as_attachment=True,
+                        download_name=f"{title}.mp3",
+                        mimetype='audio/mpeg'
+                    )
+        else:
+            if os.path.exists(output_path):
+                return send_file(
+                    output_path,
+                    as_attachment=True,
+                    download_name=f"{title}.mp4",
+                    mimetype='video/mp4'
+                )
+            for ext in ['mp4', 'mkv', 'webm']:
+                check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.{ext}')
+                if os.path.exists(check_path):
+                    return send_file(
+                        check_path,
+                        as_attachment=True,
+                        download_name=f"{title}.mp4",
+                        mimetype='video/mp4'
+                    )
+        
+        return jsonify({
+            'success': False,
+            'error': 'ファイルのダウンロードに失敗しました'
+        }), 500
+            
+    except Exception as e:
+        print(f"Internal download error: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'ダウンロードエラー: {str(e)}'
+        }), 500
 
 @app.route('/playlist')
 @login_required
