@@ -1157,6 +1157,61 @@ def api_channel_videos(channel_id):
         return jsonify({'videos': [], 'continuation': ''})
     return jsonify(result)
 
+@app.route('/getcode')
+@login_required
+def getcode():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('getcode.html', theme=theme)
+
+@app.route('/api/getcode')
+@login_required
+def api_getcode():
+    url = request.args.get('url', '')
+    
+    if not url:
+        return jsonify({'success': False, 'error': 'URLが必要です'})
+    
+    if not url.startswith('http://') and not url.startswith('https://'):
+        return jsonify({'success': False, 'error': '有効なURLを入力してください'})
+    
+    try:
+        headers = {
+            'User-Agent': random.choice(USER_AGENTS),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+        }
+        
+        res = http_session.get(url, headers=headers, timeout=15, allow_redirects=True)
+        res.raise_for_status()
+        
+        content_type = res.headers.get('Content-Type', '')
+        if 'text/html' in content_type or 'text/plain' in content_type or 'application/xml' in content_type or 'text/xml' in content_type:
+            try:
+                code = res.text
+            except:
+                code = res.content.decode('utf-8', errors='replace')
+        else:
+            code = res.content.decode('utf-8', errors='replace')
+        
+        return jsonify({
+            'success': True,
+            'url': url,
+            'code': code,
+            'status_code': res.status_code,
+            'content_type': content_type
+        })
+        
+    except requests.exceptions.Timeout:
+        return jsonify({'success': False, 'error': 'リクエストがタイムアウトしました'})
+    except requests.exceptions.ConnectionError:
+        return jsonify({'success': False, 'error': '接続エラーが発生しました'})
+    except requests.exceptions.HTTPError as e:
+        return jsonify({'success': False, 'error': f'HTTPエラー: {e.response.status_code}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'エラー: {str(e)}'})
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
