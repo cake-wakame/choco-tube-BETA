@@ -1010,9 +1010,9 @@ def api_lite_download(video_id):
         data = res.json()
         videourl = data.get('videourl', {})
         
-        if format_type == 'mp3':
+        if format_type == 'mp3' or format_type == 'm4a':
             audio_url = None
-            for q in ['144p', '240p', '360p']:
+            for q in ['144p', '240p', '360p', '480p', '720p']:
                 if q in videourl and videourl[q].get('audio', {}).get('url'):
                     audio_url = videourl[q]['audio']['url']
                     break
@@ -1021,12 +1021,13 @@ def api_lite_download(video_id):
                 return jsonify({
                     'success': True,
                     'url': audio_url,
-                    'format': 'audio',
-                    'quality': 'audio'
+                    'format': 'm4a',
+                    'quality': 'audio',
+                    'actual_format': 'm4a'
                 })
             else:
                 return jsonify({'error': '音声URLが見つかりませんでした', 'success': False}), 404
-        else:
+        elif format_type == 'mp4':
             quality_order = [quality + 'p', '360p', '480p', '720p', '240p', '144p']
             video_url = None
             actual_quality = None
@@ -1041,14 +1042,110 @@ def api_lite_download(video_id):
                 return jsonify({
                     'success': True,
                     'url': video_url,
-                    'format': 'video',
-                    'quality': actual_quality
+                    'format': 'mp4',
+                    'quality': actual_quality,
+                    'actual_format': 'mp4'
                 })
             else:
                 return jsonify({'error': '動画URLが見つかりませんでした', 'success': False}), 404
+        else:
+            return jsonify({'error': '無効なフォーマットです', 'success': False}), 400
                 
     except Exception as e:
         print(f"Lite download error: {e}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/audio-stream/<video_id>')
+@login_required
+def api_audio_stream(video_id):
+    try:
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            
+            audio_url = info.get('url')
+            
+            if not audio_url:
+                formats = info.get('formats', [])
+                for fmt in formats:
+                    if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                        audio_url = fmt.get('url')
+                        if audio_url and 'googlevideo.com' in audio_url:
+                            break
+                
+                if not audio_url:
+                    for fmt in formats:
+                        if fmt.get('acodec') != 'none':
+                            url = fmt.get('url', '')
+                            if 'googlevideo.com' in url:
+                                audio_url = url
+                                break
+            
+            if audio_url and 'googlevideo.com' in audio_url:
+                return jsonify({
+                    'success': True,
+                    'url': audio_url,
+                    'title': info.get('title', ''),
+                    'format': 'audio',
+                    'source': 'googlevideo'
+                })
+            elif audio_url:
+                return jsonify({
+                    'success': True,
+                    'url': audio_url,
+                    'title': info.get('title', ''),
+                    'format': 'audio',
+                    'source': 'other'
+                })
+            else:
+                return jsonify({'success': False, 'error': '音声URLが見つかりませんでした'}), 404
+                
+    except Exception as e:
+        print(f"Audio stream error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/thumbnail-download/<video_id>')
+@login_required
+def api_thumbnail_download(video_id):
+    quality = request.args.get('quality', 'hq')
+    
+    quality_map = {
+        'max': 'maxresdefault',
+        'sd': 'sddefault',
+        'hq': 'hqdefault',
+        'mq': 'mqdefault',
+        'default': 'default'
+    }
+    
+    thumbnail_name = quality_map.get(quality, 'hqdefault')
+    thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/{thumbnail_name}.jpg"
+    
+    try:
+        res = http_session.get(thumbnail_url, headers=get_random_headers(), timeout=10)
+        
+        if res.status_code == 200 and len(res.content) > 1000:
+            response = Response(res.content, mimetype='image/jpeg')
+            response.headers['Content-Disposition'] = f'attachment; filename="{video_id}_{thumbnail_name}.jpg"'
+            return response
+        
+        if quality != 'hq':
+            fallback_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+            res = http_session.get(fallback_url, headers=get_random_headers(), timeout=10)
+            if res.status_code == 200:
+                response = Response(res.content, mimetype='image/jpeg')
+                response.headers['Content-Disposition'] = f'attachment; filename="{video_id}_hqdefault.jpg"'
+                return response
+        
+        return jsonify({'error': 'サムネイルの取得に失敗しました', 'success': False}), 404
+        
+    except Exception as e:
+        print(f"Thumbnail download error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
 
 @app.route('/playlist')
