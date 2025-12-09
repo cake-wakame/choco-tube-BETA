@@ -287,6 +287,55 @@
     background: linear-gradient(135deg, #2ECC71, #27AE60);
 }
 
+.download-btn-main.m4a-download {
+    background: linear-gradient(135deg, #9B59B6, #8E44AD);
+}
+
+.download-btn-main.thumbnail-download {
+    background: linear-gradient(135deg, #3498DB, #2980B9);
+}
+
+.thumbnail-quality-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.thumbnail-quality-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.thumbnail-quality-btn {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.thumbnail-quality-btn:hover {
+    border-color: var(--accent-light);
+}
+
+.thumbnail-quality-btn.selected {
+    background: #3498DB;
+    border-color: #3498DB;
+    color: #fff;
+}
+
+.format-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
 .loading-spinner {
     display: none;
     text-align: center;
@@ -446,6 +495,9 @@
                     <button class="method-btn" data-method="2" onclick="selectMethod('2')">
                         <span>⚡</span> 方法2（高速）
                     </button>
+                    <button class="method-btn" data-method="3" onclick="selectMethod('3')">
+                        <span>🎵</span> 方法3（音声直接）
+                    </button>
                 </div>
                 <div class="method-description" id="methodDescription">
                     <strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。
@@ -462,13 +514,43 @@
                 </div>
             </div>
 
-            <div class="download-buttons-container">
-                <button class="download-btn-main mp4-download" id="downloadBtnMp4" onclick="startDownload('mp4')">
+            <div id="method1Buttons" class="download-buttons-container">
+                <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
                     <span>🎬</span> MP4をダウンロード
                 </button>
-                <button class="download-btn-main mp3-download" id="downloadBtnMp3" onclick="startDownload('mp3')">
+                <button class="download-btn-main mp3-download" onclick="startDownload('mp3')">
                     <span>🎵</span> MP3をダウンロード
                 </button>
+            </div>
+            
+            <div id="method2Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
+                    <span>🎬</span> MP4をダウンロード
+                </button>
+                <button class="download-btn-main m4a-download" onclick="startDownload('m4a')">
+                    <span>🎧</span> M4A音声をダウンロード
+                </button>
+            </div>
+            
+            <div id="method3Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startAudioStream()">
+                    <span>🎵</span> 音声を直接ダウンロード（googlevideo）
+                </button>
+            </div>
+            
+            <div class="thumbnail-quality-section">
+                <p class="format-section-title">🖼️ サムネイルダウンロード</p>
+                <div class="thumbnail-quality-buttons">
+                    <button class="thumbnail-quality-btn" data-tq="max" onclick="selectThumbnailQuality('max')">最高画質</button>
+                    <button class="thumbnail-quality-btn selected" data-tq="hq" onclick="selectThumbnailQuality('hq')">高画質</button>
+                    <button class="thumbnail-quality-btn" data-tq="mq" onclick="selectThumbnailQuality('mq')">標準</button>
+                    <button class="thumbnail-quality-btn" data-tq="default" onclick="selectThumbnailQuality('default')">低画質</button>
+                </div>
+                <div class="download-buttons-container" style="margin-top: 12px;">
+                    <button class="download-btn-main thumbnail-download" onclick="downloadThumbnail()">
+                        <span>🖼️</span> サムネイルをダウンロード
+                    </button>
+                </div>
             </div>
 
             <div class="download-progress" id="downloadProgress">
@@ -498,6 +580,7 @@
 let currentVideoId = '';
 let selectedQuality = '720';
 let selectedMethod = '1';
+let selectedThumbnailQuality = 'hq';
 
 function extractVideoId(url) {
     const patterns = [
@@ -587,11 +670,71 @@ function selectMethod(method) {
     });
 
     const descEl = document.getElementById('methodDescription');
+    const method1Btns = document.getElementById('method1Buttons');
+    const method2Btns = document.getElementById('method2Buttons');
+    
+    const method3Btns = document.getElementById('method3Buttons');
+    
+    method1Btns.style.display = 'none';
+    method2Btns.style.display = 'none';
+    method3Btns.style.display = 'none';
+    
     if (method === '1') {
         descEl.innerHTML = '<strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。';
-    } else {
-        descEl.innerHTML = '<strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声なし動画の場合があります。';
+        method1Btns.style.display = 'flex';
+    } else if (method === '2') {
+        descEl.innerHTML = '<strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。';
+        method2Btns.style.display = 'flex';
+    } else if (method === '3') {
+        descEl.innerHTML = '<strong>方法3:</strong> YouTubeから直接音声URLを取得します。googlevideo.comからのストリーミングです。';
+        method3Btns.style.display = 'flex';
     }
+}
+
+async function startAudioStream() {
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+    
+    hideError();
+    showDownloadProgress(true, '音声URLを取得中（googlevideo.com）...');
+    
+    try {
+        const response = await fetch(`/api/audio-stream/${currentVideoId}`);
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+            showDownloadProgress(false);
+            if (data.url.includes('googlevideo.com')) {
+                window.open(data.url, '_blank');
+            } else {
+                showError('googlevideo.comのURLが取得できませんでした。別の方法をお試しください。');
+            }
+        } else {
+            showDownloadProgress(false);
+            showError(data.error || '音声URLの取得に失敗しました');
+        }
+    } catch (error) {
+        showDownloadProgress(false);
+        showError('音声URLの取得に失敗しました');
+    }
+}
+
+function selectThumbnailQuality(quality) {
+    selectedThumbnailQuality = quality;
+    document.querySelectorAll('.thumbnail-quality-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.tq === quality);
+    });
+}
+
+function downloadThumbnail() {
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+    
+    window.location.href = `/api/thumbnail-download/${currentVideoId}?quality=${selectedThumbnailQuality}`;
 }
 
 function showDownloadProgress(show, message = 'ダウンロードリンクを取得中...') {
@@ -610,7 +753,8 @@ async function startDownload(format) {
     hideError();
 
     if (selectedMethod === '1') {
-        showDownloadProgress(true, format === 'mp3' ? 'MP3を作成中（しばらくお待ちください）...' : 'MP4を作成中（しばらくお待ちください）...');
+        const formatMsg = format === 'mp3' ? 'MP3を作成中（しばらくお待ちください）...' : 'MP4を作成中（しばらくお待ちください）...';
+        showDownloadProgress(true, formatMsg);
 
         const downloadUrl = `/api/internal-download/${currentVideoId}?format=${format}&quality=${selectedQuality}`;
 
@@ -624,7 +768,8 @@ async function startDownload(format) {
             document.body.removeChild(iframe);
         }, 120000);
     } else {
-        showDownloadProgress(true, 'ダウンロードリンクを取得中...');
+        const formatName = format === 'm4a' ? 'M4A音声' : (format === 'mp4' ? 'MP4動画' : format.toUpperCase());
+        showDownloadProgress(true, `${formatName}のダウンロードリンクを取得中...`);
 
         try {
             const response = await fetch(`/api/lite-download/${currentVideoId}?format=${format}&quality=${selectedQuality}`);
@@ -632,6 +777,9 @@ async function startDownload(format) {
 
             if (data.success && data.url) {
                 showDownloadProgress(false);
+                if (data.actual_format && data.actual_format !== format) {
+                    alert(`注意: ${data.actual_format.toUpperCase()}形式でダウンロードされます`);
+                }
                 window.open(data.url, '_blank');
             } else {
                 showDownloadProgress(false);
