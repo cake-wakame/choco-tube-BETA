@@ -793,9 +793,10 @@ async function startConvert(apiType, targetFormat) {
         'converthub': 'ConvertHub',
         'transloadit': 'Transloadit',
         'freeconvert': 'FreeConvert',
-        'apify': 'Apify'
+        'apify': 'Apify',
+        'direct': '確実MP3'
     };
-    showDownloadProgress(true, `${apiNames[apiType]}で${targetFormat.toUpperCase()}に変換中...（数分かかる場合があります）`);
+    showDownloadProgress(true, `${apiNames[apiType] || apiType}で${targetFormat.toUpperCase()}に変換中...（数分かかる場合があります）`);
 
     try {
         const response = await fetch(`/api/convert/${apiType}/${currentVideoId}?format=${targetFormat}`);
