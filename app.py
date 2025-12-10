@@ -133,7 +133,6 @@ def get_youtube_search(query, max_results=20, use_api_keys=True):
     global _current_api_key_index
     
     if use_api_keys and YOUTUBE_API_KEYS:
-        # Try each API key in rotation
         for attempt in range(len(YOUTUBE_API_KEYS)):
             key_index = (_current_api_key_index + attempt) % len(YOUTUBE_API_KEYS)
             api_key = YOUTUBE_API_KEYS[key_index]
@@ -141,7 +140,6 @@ def get_youtube_search(query, max_results=20, use_api_keys=True):
             try:
                 res = http_session.get(url, timeout=5)
                 if res.status_code == 403:
-                    # Quota exceeded, try next key
                     print(f"YouTube API key {key_index + 1} quota exceeded, trying next...")
                     continue
                 res.raise_for_status()
@@ -161,17 +159,59 @@ def get_youtube_search(query, max_results=20, use_api_keys=True):
                         'views': '',
                         'length': ''
                     })
-                # Update index for next search (rotate keys)
                 _current_api_key_index = (key_index + 1) % len(YOUTUBE_API_KEYS)
                 return results
             except Exception as e:
                 print(f"YouTube API key {key_index + 1} error: {e}")
                 continue
         
-        # All API keys failed, fallback to Invidious
         print("All YouTube API keys failed, falling back to Invidious")
     
     return invidious_search(query)
+
+def get_invidious_search_first(query, max_results=20):
+    global _current_api_key_index
+    
+    results = invidious_search(query)
+    if results:
+        return results
+    
+    print("Invidious search failed, falling back to YouTube API")
+    
+    if YOUTUBE_API_KEYS:
+        for attempt in range(len(YOUTUBE_API_KEYS)):
+            key_index = (_current_api_key_index + attempt) % len(YOUTUBE_API_KEYS)
+            api_key = YOUTUBE_API_KEYS[key_index]
+            url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={urllib.parse.quote(query)}&maxResults={max_results}&key={api_key}"
+            try:
+                res = http_session.get(url, timeout=5)
+                if res.status_code == 403:
+                    print(f"YouTube API key {key_index + 1} quota exceeded, trying next...")
+                    continue
+                res.raise_for_status()
+                data = res.json()
+                results = []
+                for item in data.get('items', []):
+                    snippet = item.get('snippet', {})
+                    results.append({
+                        'type': 'video',
+                        'id': item.get('id', {}).get('videoId', ''),
+                        'title': snippet.get('title', ''),
+                        'author': snippet.get('channelTitle', ''),
+                        'authorId': snippet.get('channelId', ''),
+                        'thumbnail': f"https://i.ytimg.com/vi/{item.get('id', {}).get('videoId', '')}/hqdefault.jpg",
+                        'published': snippet.get('publishedAt', ''),
+                        'description': snippet.get('description', ''),
+                        'views': '',
+                        'length': ''
+                    })
+                _current_api_key_index = (key_index + 1) % len(YOUTUBE_API_KEYS)
+                return results
+            except Exception as e:
+                print(f"YouTube API key {key_index + 1} error: {e}")
+                continue
+    
+    return []
 
 def invidious_search(query, page=1):
     path = f"/search?q={urllib.parse.quote(query)}&page={page}&hl=jp"
@@ -572,14 +612,22 @@ def search():
     vc = request.cookies.get('vc', '1')
     proxy = request.cookies.get('proxy', 'False')
     theme = request.cookies.get('theme', 'dark')
+    search_mode = request.cookies.get('search_mode', 'youtube')
 
     if not query:
-        return render_template('search.html', results=[], query='', vc=vc, proxy=proxy, theme=theme, next='')
+        return render_template('search.html', results=[], query='', vc=vc, proxy=proxy, theme=theme, next='', search_mode=search_mode)
 
-    results = get_youtube_search(query) if page == '1' else invidious_search(query, int(page))
+    if page == '1':
+        if search_mode == 'invidious':
+            results = get_invidious_search_first(query)
+        else:
+            results = get_youtube_search(query)
+    else:
+        results = invidious_search(query, int(page))
+    
     next_page = f"/search?q={urllib.parse.quote(query)}&page={int(page) + 1}"
 
-    return render_template('search.html', results=results, query=query, vc=vc, proxy=proxy, theme=theme, next=next_page)
+    return render_template('search.html', results=results, query=query, vc=vc, proxy=proxy, theme=theme, next=next_page, search_mode=search_mode)
 
 @app.route('/watch')
 @login_required
