@@ -1,3 +1,9 @@
+#
+  3: "https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu.json",
+  4: "https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/parameter.json",
+  5: "https://apis.kahoot.it/media-api/youtube/key"
+
+#
 Renderデプロイ用コマンド
 ビルドコマンド:
 
