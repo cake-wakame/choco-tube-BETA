@@ -35,6 +35,22 @@ Kw97s23Gzc3aMFnQtmMlGUwH83kbN8ph
 オーソシークレット:
 
 DwIWy0A9q8z07EuSbikrVur3fqNLuzoALqrTyrdV
+#
+認証キー:
+
+sT4DdXX1nqDbsyDB0Mrf4i0Ol86ihIdi
+
+オーソシークレット:
+
+n0BH7qfaXIqwPKIJ7uPb5xlNe2isvbuITx6tGBBA
+#
+認証キー:
+
+JUiDRWwmJ2ZMCxwpicBv9JiH47m8vdT5
+
+オーソシークレット:
+
+PclFAAGpDF2oyL0wMUidjFtaeVsLXSMj9f4AWM2L
 ##
 freeconvert:
 こちらがあなたの個人アクセストークンです。これが唯一の時間です。表示されているので、失くしないでください。このトークンを使ってAPIを作成できます。 要求:
@@ -43,5 +59,14 @@ api_production_15cc009b9ac13759fb43f4946b3c950fee5e56e2f0214f242f6e9e4efc3093df.
 
 #
 api_production_f43e48b89caca96b4b226630878388ef222084c9542976b20874bd65ea1d9e38.69393f3ea22aa85dd55c84ff.693940155d83271de3b3cce6
+#
+api_production_d3ba770023e7e3696ea92bd40c80c3fdb2aa69bb5df390124f40bb7dc6f1a218.69393f3ea22aa85dd55c84ff.69394111142a194b364173c7
+#
+api_production_f23f9dedc5746dd2c88a7b4dedd6ab3125648c82dafa7c12a2587584430a7bf9.69393f3ea22aa85dd55c84ff.6939413f5d83271de3b3cd21
+#
+api_production_440a09c7c6cce3472e69f8fa157a9f81db3f9e0d8a280c0b17f80ac1ed622323.69393f3ea22aa85dd55c84ff.693941605d83271de3b3cd2b
+#
+api_production_afc5194d8f26f580bab31a2bbb66ae192258df3bced4c00d5c58a995446482f4.69393f3ea22aa85dd55c84ff.69394187142a194b364173ec
+
 #
 api_production_05a7985cb1f97464e3fff736bd6529ab581925e07352fe5e3652034c6d49b886.69393f3ea22aa85dd55c84ff.693940a75d83271de3b3cd02
