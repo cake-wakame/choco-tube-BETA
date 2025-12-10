@@ -37,6 +37,18 @@ def login_required(f):
 
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 
+# YouTube API Keys for rotation
+YOUTUBE_API_KEYS = [
+    "AIzaSyCz7f0X_giaGyC9u1EfGZPBuAC9nXiL5Mo",
+    "AIzaSyBmzCw7-sX1vm-uL_u2Qy3LuVZuxye4Wys",
+    "AIzaSyBWScla0K91jUL6qQErctN9N2b3j9ds7HI",
+    "AIzaSyA17CdOQtQRC3DQe7rgIzFwTUjwAy_3CAc",
+    "AIzaSyDdk_yY0tN4gKsm4uyMYrIlv1RwXIYXrnw",
+    "AIzaSyDeU5zpcth2OgXDfToyc7-QnSJsDc41UGk",
+    "AIzaSyClu2V_22XpCG2GTe1euD35_Mh5bn4eTjA"
+]
+_current_api_key_index = 0
+
 EDU_VIDEO_API = "https://siawaseok.duckdns.org/api/video2/"
 EDU_CONFIG_URL = "https://raw.githubusercontent.com/siawaseok3/wakame/master/video_config.json"
 STREAM_API = "https://ytdl-0et1.onrender.com/stream/"
@@ -117,32 +129,48 @@ def request_invidious_api(path, timeout=(2, 5)):
             continue
     return None
 
-def get_youtube_search(query, max_results=20):
-    if YOUTUBE_API_KEY:
-        url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={urllib.parse.quote(query)}&maxResults={max_results}&key={YOUTUBE_API_KEY}"
-        try:
-            res = http_session.get(url, timeout=5)
-            res.raise_for_status()
-            data = res.json()
-            results = []
-            for item in data.get('items', []):
-                snippet = item.get('snippet', {})
-                results.append({
-                    'type': 'video',
-                    'id': item.get('id', {}).get('videoId', ''),
-                    'title': snippet.get('title', ''),
-                    'author': snippet.get('channelTitle', ''),
-                    'authorId': snippet.get('channelId', ''),
-                    'thumbnail': f"https://i.ytimg.com/vi/{item.get('id', {}).get('videoId', '')}/hqdefault.jpg",
-                    'published': snippet.get('publishedAt', ''),
-                    'description': snippet.get('description', ''),
-                    'views': '',
-                    'length': ''
-                })
-            return results
-        except Exception as e:
-            print(f"YouTube API error: {e}")
-
+def get_youtube_search(query, max_results=20, use_api_keys=True):
+    global _current_api_key_index
+    
+    if use_api_keys and YOUTUBE_API_KEYS:
+        # Try each API key in rotation
+        for attempt in range(len(YOUTUBE_API_KEYS)):
+            key_index = (_current_api_key_index + attempt) % len(YOUTUBE_API_KEYS)
+            api_key = YOUTUBE_API_KEYS[key_index]
+            url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&q={urllib.parse.quote(query)}&maxResults={max_results}&key={api_key}"
+            try:
+                res = http_session.get(url, timeout=5)
+                if res.status_code == 403:
+                    # Quota exceeded, try next key
+                    print(f"YouTube API key {key_index + 1} quota exceeded, trying next...")
+                    continue
+                res.raise_for_status()
+                data = res.json()
+                results = []
+                for item in data.get('items', []):
+                    snippet = item.get('snippet', {})
+                    results.append({
+                        'type': 'video',
+                        'id': item.get('id', {}).get('videoId', ''),
+                        'title': snippet.get('title', ''),
+                        'author': snippet.get('channelTitle', ''),
+                        'authorId': snippet.get('channelId', ''),
+                        'thumbnail': f"https://i.ytimg.com/vi/{item.get('id', {}).get('videoId', '')}/hqdefault.jpg",
+                        'published': snippet.get('publishedAt', ''),
+                        'description': snippet.get('description', ''),
+                        'views': '',
+                        'length': ''
+                    })
+                # Update index for next search (rotate keys)
+                _current_api_key_index = (key_index + 1) % len(YOUTUBE_API_KEYS)
+                return results
+            except Exception as e:
+                print(f"YouTube API key {key_index + 1} error: {e}")
+                continue
+        
+        # All API keys failed, fallback to Invidious
+        print("All YouTube API keys failed, falling back to Invidious")
+    
     return invidious_search(query)
 
 def invidious_search(query, page=1):
