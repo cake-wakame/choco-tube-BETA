@@ -15,6 +15,7 @@ Transloadit
 認証キー:
 
 R244EKuonluFkwhTYOu85vi6ZPm6mmZV
+
 オーソシークレット:
 
 4zVZ7eQm16qawPil8B4NJRr68kkCdMXQkd8NbNaq
@@ -24,6 +25,7 @@ R244EKuonluFkwhTYOu85vi6ZPm6mmZV
 認証キー:
 
 mTMNtHcTK4cg7NkUMwMn9OYS7irw4qvL
+
 オーソシークレット:
 
 bscmKzXSOmMEH7tKrXCyJpap2QQrlaL7k66ckspg
