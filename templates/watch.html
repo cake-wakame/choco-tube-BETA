@@ -73,6 +73,17 @@
                 </a>
             </div>
 
+            {% if mode == 'education' %}
+            <div class="edu-source-selector">
+                <label for="eduSourceSelect">EDUパラメータ:</label>
+                <select id="eduSourceSelect">
+                    {% for key, source in edu_sources.items() %}
+                    <option value="{{ key }}" {% if edu_source == key %}selected{% endif %}>{{ source.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
             {% if video and video.streamUrls %}
             <div class="resolution-selector">
                 <label for="resolutionSelect">画質選択:</label>
@@ -666,6 +677,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         updateButtonState();
+    })();
+
+    (function initEduSourceSelector() {
+        var eduSourceSelect = document.getElementById('eduSourceSelect');
+        if (!eduSourceSelect) return;
+
+        function setCookie(name, value, days) {
+            var d = new Date();
+            d.setTime(d.getTime() + (days || 30) * 24 * 60 * 60 * 1000);
+            document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/';
+        }
+
+        eduSourceSelect.addEventListener('change', function() {
+            setCookie('edu_source', this.value, 30);
+            window.location.reload();
+        });
     })();
 });
 </script>
