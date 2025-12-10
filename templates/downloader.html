@@ -374,6 +374,26 @@
     display: block;
 }
 
+.success-message {
+    display: none;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    color: #2ecc71;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.success-message.show {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .download-progress {
     display: none;
     align-items: center;
@@ -465,6 +485,7 @@
         </div>
 
         <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
 
         <div class="loading-spinner" id="loadingSpinner">
             <div class="spinner"></div>
@@ -498,6 +519,18 @@
                     <button class="method-btn" data-method="3" onclick="selectMethod('3')">
                         <span>🎵</span> 方法3（音声直接）
                     </button>
+                    <button class="method-btn" data-method="4" onclick="selectMethod('4')">
+                        <span>🔄</span> 方法4（ConvertHub）
+                    </button>
+                    <button class="method-btn" data-method="5" onclick="selectMethod('5')">
+                        <span>🎛️</span> 方法5（Transloadit）
+                    </button>
+                    <button class="method-btn" data-method="6" onclick="selectMethod('6')">
+                        <span>📦</span> 方法6（FreeConvert）
+                    </button>
+                    <button class="method-btn" data-method="7" onclick="selectMethod('7')">
+                        <span>🤖</span> 方法7（Apify）
+                    </button>
                 </div>
                 <div class="method-description" id="methodDescription">
                     <strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。
@@ -522,7 +555,7 @@
                     <span>🎵</span> MP3をダウンロード
                 </button>
             </div>
-            
+
             <div id="method2Buttons" class="download-buttons-container" style="display: none;">
                 <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
                     <span>🎬</span> MP4をダウンロード
@@ -531,13 +564,49 @@
                     <span>🎧</span> M4A音声をダウンロード
                 </button>
             </div>
-            
+
             <div id="method3Buttons" class="download-buttons-container" style="display: none;">
                 <button class="download-btn-main mp3-download" onclick="startAudioStream()">
                     <span>🎵</span> 音声を直接ダウンロード（googlevideo）
                 </button>
             </div>
-            
+
+            <div id="method4Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startConvert('converthub', 'mp3')">
+                    <span>🎵</span> MP3に変換（ConvertHub）
+                </button>
+                <button class="download-btn-main m4a-download" onclick="startConvert('converthub', 'wav')">
+                    <span>🎧</span> WAVに変換（ConvertHub）
+                </button>
+            </div>
+
+            <div id="method5Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startConvert('transloadit', 'mp3')">
+                    <span>🎵</span> MP3に変換（Transloadit）
+                </button>
+                <button class="download-btn-main m4a-download" onclick="startConvert('transloadit', 'aac')">
+                    <span>🎧</span> AACに変換（Transloadit）
+                </button>
+            </div>
+
+            <div id="method6Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startConvert('freeconvert', 'mp3')">
+                    <span>🎵</span> MP3に変換（FreeConvert）
+                </button>
+                <button class="download-btn-main m4a-download" onclick="startConvert('freeconvert', 'flac')">
+                    <span>🎧</span> FLACに変換（FreeConvert）
+                </button>
+            </div>
+
+            <div id="method7Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startConvert('apify', 'mp3')">
+                    <span>🎵</span> MP3に変換（Apify）
+                </button>
+                <button class="download-btn-main m4a-download" onclick="startConvert('apify', 'ogg')">
+                    <span>🎧</span> OGGに変換（Apify）
+                </button>
+            </div>
+
             <div class="thumbnail-quality-section">
                 <p class="format-section-title">🖼️ サムネイルダウンロード</p>
                 <div class="thumbnail-quality-buttons">
@@ -605,6 +674,19 @@ function hideError() {
     document.getElementById('errorMessage').classList.remove('show');
 }
 
+function showSuccessMessage(message) {
+    const successEl = document.getElementById('successMessage');
+    successEl.textContent = message;
+    successEl.classList.add('show');
+    setTimeout(() => {
+        successEl.classList.remove('show');
+    }, 5000);
+}
+
+function hideSuccessMessage() {
+    document.getElementById('successMessage').classList.remove('show');
+}
+
 function showLoading(show) {
     document.getElementById('loadingSpinner').classList.toggle('show', show);
     document.getElementById('fetchBtn').disabled = show;
@@ -670,24 +752,93 @@ function selectMethod(method) {
     });
 
     const descEl = document.getElementById('methodDescription');
-    const method1Btns = document.getElementById('method1Buttons');
-    const method2Btns = document.getElementById('method2Buttons');
-    
-    const method3Btns = document.getElementById('method3Buttons');
-    
-    method1Btns.style.display = 'none';
-    method2Btns.style.display = 'none';
-    method3Btns.style.display = 'none';
-    
-    if (method === '1') {
-        descEl.innerHTML = '<strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。';
-        method1Btns.style.display = 'flex';
-    } else if (method === '2') {
-        descEl.innerHTML = '<strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。';
-        method2Btns.style.display = 'flex';
-    } else if (method === '3') {
-        descEl.innerHTML = '<strong>方法3:</strong> YouTubeから直接音声URLを取得します。googlevideo.comからのストリーミングです。';
-        method3Btns.style.display = 'flex';
+    for (let i = 1; i <= 7; i++) {
+        const btns = document.getElementById(`method${i}Buttons`);
+        if (btns) btns.style.display = 'none';
+    }
+
+    const descriptions = {
+        '1': '<strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。',
+        '2': '<strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。',
+        '3': '<strong>方法3:</strong> YouTubeから直接音声URLを取得します。googlevideo.comからのストリーミングです。',
+        '4': '<strong>方法4:</strong> ConvertHub APIを使用。800種類以上のファイル形式に対応した高品質変換。',
+        '5': '<strong>方法5:</strong> Transloadit APIを使用。プロ品質のオーディオエンコーディング。',
+        '6': '<strong>方法6:</strong> FreeConvert APIを使用。MP3、FLAC、WAVなど多形式対応。',
+        '7': '<strong>方法7:</strong> Apify Audio Converter APIを使用。Telegram/WhatsApp形式にも対応。'
+    };
+
+    descEl.innerHTML = descriptions[method] || '';
+    const methodBtns = document.getElementById(`method${method}Buttons`);
+    if (methodBtns) methodBtns.style.display = 'flex';
+}
+
+async function startConvert(apiType, targetFormat) {
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+
+    hideError();
+    const apiNames = {
+        'converthub': 'ConvertHub',
+        'transloadit': 'Transloadit',
+        'freeconvert': 'FreeConvert',
+        'apify': 'Apify'
+    };
+    showDownloadProgress(true, `${apiNames[apiType]}で${targetFormat.toUpperCase()}に変換中...（数分かかる場合があります）`);
+
+    try {
+        const response = await fetch(`/api/convert/${apiType}/${currentVideoId}?format=${targetFormat}`);
+        const data = await response.json();
+
+        if (data.success && data.url) {
+            showDownloadProgress(true, 'ファイルを自動ダウンロード中...');
+            
+            const filename = (data.title || currentVideoId) + '.' + targetFormat;
+            
+            try {
+                const fileResponse = await fetch(data.url);
+                if (fileResponse.ok) {
+                    const blob = await fileResponse.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = blobUrl;
+                    downloadLink.download = filename;
+                    downloadLink.style.display = 'none';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    window.URL.revokeObjectURL(blobUrl);
+                    
+                    showDownloadProgress(false);
+                    showSuccessMessage(`${targetFormat.toUpperCase()}ファイルを自動保存しました！`);
+                } else {
+                    const fallbackLink = document.createElement('a');
+                    fallbackLink.href = data.url;
+                    fallbackLink.download = filename;
+                    fallbackLink.target = '_blank';
+                    document.body.appendChild(fallbackLink);
+                    fallbackLink.click();
+                    document.body.removeChild(fallbackLink);
+                    showDownloadProgress(false);
+                }
+            } catch (fetchError) {
+                const fallbackLink = document.createElement('a');
+                fallbackLink.href = data.url;
+                fallbackLink.download = filename;
+                fallbackLink.target = '_blank';
+                document.body.appendChild(fallbackLink);
+                fallbackLink.click();
+                document.body.removeChild(fallbackLink);
+                showDownloadProgress(false);
+            }
+        } else {
+            showDownloadProgress(false);
+            showError(data.error || '変換に失敗しました');
+        }
+    } catch (error) {
+        showDownloadProgress(false);
+        showError('変換リクエストに失敗しました');
     }
 }
 
@@ -696,14 +847,14 @@ async function startAudioStream() {
         showError('まず動画情報を取得してください');
         return;
     }
-    
+
     hideError();
     showDownloadProgress(true, '音声URLを取得中（googlevideo.com）...');
-    
+
     try {
         const response = await fetch(`/api/audio-stream/${currentVideoId}`);
         const data = await response.json();
-        
+
         if (data.success && data.url) {
             showDownloadProgress(false);
             if (data.url.includes('googlevideo.com')) {
@@ -733,7 +884,7 @@ function downloadThumbnail() {
         showError('まず動画情報を取得してください');
         return;
     }
-    
+
     window.location.href = `/api/thumbnail-download/${currentVideoId}?quality=${selectedThumbnailQuality}`;
 }
 
@@ -758,15 +909,39 @@ async function startDownload(format) {
 
         const downloadUrl = `/api/internal-download/${currentVideoId}?format=${format}&quality=${selectedQuality}`;
 
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = downloadUrl;
-        document.body.appendChild(iframe);
-
-        setTimeout(() => {
+        try {
+            const response = await fetch(downloadUrl);
+            if (response.ok) {
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `${currentVideoId}.${format}`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)/i);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
+                    }
+                }
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = blobUrl;
+                downloadLink.download = filename;
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                window.URL.revokeObjectURL(blobUrl);
+                
+                showDownloadProgress(false);
+                showSuccessMessage(`${format.toUpperCase()}ファイルを自動保存しました！`);
+            } else {
+                showDownloadProgress(false);
+                showError('ダウンロードに失敗しました。もう一度お試しください。');
+            }
+        } catch (error) {
             showDownloadProgress(false);
-            document.body.removeChild(iframe);
-        }, 120000);
+            showError('ダウンロードに失敗しました: ' + error.message);
+        }
     } else {
         const formatName = format === 'm4a' ? 'M4A音声' : (format === 'mp4' ? 'MP4動画' : format.toUpperCase());
         showDownloadProgress(true, `${formatName}のダウンロードリンクを取得中...`);
