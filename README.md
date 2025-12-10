@@ -9,10 +9,12 @@ gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 2 --timeout 120
 
 ##
 Transloadit
-Auth Key:
+あなたの認証キーと秘密
+認証キーと秘密を必ずメモしてください。オーソシークレットは今後表示されません。
 
-a49d62c45c3d7a2d6efaf02bf23e2a37
+認証キー:
 
-Auth Secret:
+R244EKuonluFkwhTYOu85vi6ZPm6mmZV
+オーソシークレット:
 
-d307b850040763cfb71b82abb37c07580f901dcf
+4zVZ7eQm16qawPil8B4NJRr68kkCdMXQkd8NbNaq
