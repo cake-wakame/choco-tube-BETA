@@ -531,6 +531,9 @@
                     <button class="method-btn" data-method="7" onclick="selectMethod('7')">
                         <span>🤖</span> 方法7（Apify）
                     </button>
+                    <button class="method-btn" data-method="8" onclick="selectMethod('8')">
+                        <span>🎯</span> 方法8（確実MP3）
+                    </button>
                 </div>
                 <div class="method-description" id="methodDescription">
                     <strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。
@@ -604,6 +607,12 @@
                 </button>
                 <button class="download-btn-main m4a-download" onclick="startConvert('apify', 'ogg')">
                     <span>🎧</span> OGGに変換（Apify）
+                </button>
+            </div>
+
+            <div id="method8Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp3-download" onclick="startConvert('direct', 'mp3')">
+                    <span>🎯</span> 確実にMP3をダウンロード
                 </button>
             </div>
 
@@ -752,7 +761,7 @@ function selectMethod(method) {
     });
 
     const descEl = document.getElementById('methodDescription');
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 8; i++) {
         const btns = document.getElementById(`method${i}Buttons`);
         if (btns) btns.style.display = 'none';
     }
@@ -764,7 +773,8 @@ function selectMethod(method) {
         '4': '<strong>方法4:</strong> ConvertHub APIを使用。800種類以上のファイル形式に対応した高品質変換。',
         '5': '<strong>方法5:</strong> Transloadit APIを使用。プロ品質のオーディオエンコーディング。',
         '6': '<strong>方法6:</strong> FreeConvert APIを使用。MP3、FLAC、WAVなど多形式対応。',
-        '7': '<strong>方法7:</strong> Apify Audio Converter APIを使用。Telegram/WhatsApp形式にも対応。'
+        '7': '<strong>方法7:</strong> Apify Audio Converter APIを使用。Telegram/WhatsApp形式にも対応。',
+        '8': '<strong>方法8:</strong> 確実にMP3をダウンロード。外部変換サービスを使用するため、エラーが出にくい方法です。'
     };
 
     descEl.innerHTML = descriptions[method] || '';
