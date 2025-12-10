@@ -367,12 +367,12 @@ def get_channel_videos(channel_id, continuation=None):
     path = f"/channels/{urllib.parse.quote(channel_id)}/videos"
     if continuation:
         path += f"?continuation={urllib.parse.quote(continuation)}"
-    
+
     data = request_invidious_api(path, timeout=(5, 15))
-    
+
     if not data:
         return None
-    
+
     videos = []
     for item in data.get('videos', []):
         length_seconds = item.get('lengthSeconds', 0)
@@ -386,7 +386,7 @@ def get_channel_videos(channel_id, continuation=None):
             'views': item.get('viewCountText', ''),
             'length': str(datetime.timedelta(seconds=length_seconds)) if length_seconds else ''
         })
-    
+
     return {
         'videos': videos,
         'continuation': data.get('continuation', '')
@@ -511,7 +511,7 @@ def get_suggestions(keyword):
 def login():
     if session.get('logged_in'):
         return redirect(url_for('index'))
-    
+
     error = None
     if request.method == 'POST':
         password = request.form.get('password', '')
@@ -520,7 +520,7 @@ def login():
             return redirect(url_for('index'))
         else:
             error = 'パスワードが間違っています'
-    
+
     return render_template('login.html', error=error)
 
 @app.route('/')
@@ -568,7 +568,7 @@ def watch():
     video_info = get_video_info(video_id)
     stream_urls = get_stream_url(video_id)
     comments = get_comments(video_id)
-    
+
     playlist_videos = []
     playlist_title = ''
     if playlist_id:
@@ -605,7 +605,7 @@ def watch_high_quality():
     video_info = get_video_info(video_id)
     stream_urls = get_stream_url(video_id)
     comments = get_comments(video_id)
-    
+
     playlist_videos = []
     playlist_title = ''
     if playlist_id:
@@ -642,7 +642,7 @@ def watch_embed():
     video_info = get_video_info(video_id)
     stream_urls = get_stream_url(video_id)
     comments = get_comments(video_id)
-    
+
     playlist_videos = []
     playlist_title = ''
     if playlist_id:
@@ -679,7 +679,7 @@ def watch_education():
     video_info = get_video_info(video_id)
     stream_urls = get_stream_url(video_id)
     comments = get_comments(video_id)
-    
+
     playlist_videos = []
     playlist_title = ''
     if playlist_id:
@@ -793,7 +793,7 @@ def api_video_info(video_id):
 def api_download(video_id):
     format_type = request.args.get('format', 'video')
     quality = request.args.get('quality', '720')
-    
+
     if format_type == 'audio':
         download_url = f"https://api.cobalt.tools/api/json"
         try:
@@ -815,7 +815,7 @@ def api_download(video_id):
                     return redirect(data['url'])
         except Exception as e:
             print(f"Cobalt API error: {e}")
-        
+
         fallback_url = f"https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128"
         return redirect(fallback_url)
     else:
@@ -839,7 +839,7 @@ def api_download(video_id):
                     return redirect(data['url'])
         except Exception as e:
             print(f"Cobalt API error: {e}")
-        
+
         fallback_url = f"https://dl.y2mate.is/mates/convert?id={video_id}&format=mp4&quality={quality}"
         return redirect(fallback_url)
 
@@ -870,14 +870,14 @@ def cleanup_old_downloads():
 def api_internal_download(video_id):
     format_type = request.args.get('format', 'mp4')
     quality = request.args.get('quality', '720')
-    
+
     video_url = f"https://www.youtube.com/watch?v={video_id}"
-    
+
     cleanup_old_downloads()
-    
+
     unique_id = f"{video_id}_{int(time.time())}"
     cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_{unique_id}.txt')
-    
+
     try:
         cookies_content = """# Netscape HTTP Cookie File
 .youtube.com    TRUE    /       TRUE    2147483647      CONSENT YES+cb
@@ -885,7 +885,7 @@ def api_internal_download(video_id):
 """
         with open(cookie_file, 'w') as f:
             f.write(cookies_content)
-        
+
         base_opts = {
             'quiet': True,
             'no_warnings': True,
@@ -897,7 +897,7 @@ def api_internal_download(video_id):
             'socket_timeout': 30,
             'retries': 3,
         }
-        
+
         if format_type == 'mp3':
             output_path = os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.mp3')
             ydl_opts = {
@@ -919,14 +919,14 @@ def api_internal_download(video_id):
                 'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_{unique_id}.%(ext)s'),
                 'merge_output_format': 'mp4',
             }
-        
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = sanitize_filename(info.get('title', video_id) if info else video_id)
-        
+
         if os.path.exists(cookie_file):
             os.remove(cookie_file)
-        
+
         if format_type == 'mp3':
             if os.path.exists(output_path):
                 return send_file(
@@ -961,12 +961,12 @@ def api_internal_download(video_id):
                         download_name=f"{title}.mp4",
                         mimetype='video/mp4'
                     )
-        
+
         return jsonify({
             'success': False,
             'error': 'ファイルのダウンロードに失敗しました'
         }), 500
-            
+
     except Exception as e:
         print(f"Internal download error: {e}")
         if os.path.exists(cookie_file):
@@ -999,24 +999,24 @@ def api_stream(video_id):
 def api_lite_download(video_id):
     format_type = request.args.get('format', 'mp4')
     quality = request.args.get('quality', '360')
-    
+
     try:
         stream_url = f"https://siawaseok.duckdns.org/api/stream/{video_id}/type2"
         res = http_session.get(stream_url, headers=get_random_headers(), timeout=15)
-        
+
         if res.status_code != 200:
             return jsonify({'error': 'ストリームデータの取得に失敗しました', 'success': False}), 500
-        
+
         data = res.json()
         videourl = data.get('videourl', {})
-        
+
         if format_type == 'mp3' or format_type == 'm4a':
             audio_url = None
             for q in ['144p', '240p', '360p', '480p', '720p']:
                 if q in videourl and videourl[q].get('audio', {}).get('url'):
                     audio_url = videourl[q]['audio']['url']
                     break
-            
+
             if audio_url:
                 return jsonify({
                     'success': True,
@@ -1031,13 +1031,13 @@ def api_lite_download(video_id):
             quality_order = [quality + 'p', '360p', '480p', '720p', '240p', '144p']
             video_url = None
             actual_quality = None
-            
+
             for q in quality_order:
                 if q in videourl and videourl[q].get('video', {}).get('url'):
                     video_url = videourl[q]['video']['url']
                     actual_quality = q
                     break
-            
+
             if video_url:
                 return jsonify({
                     'success': True,
@@ -1050,7 +1050,7 @@ def api_lite_download(video_id):
                 return jsonify({'error': '動画URLが見つかりませんでした', 'success': False}), 404
         else:
             return jsonify({'error': '無効なフォーマットです', 'success': False}), 400
-                
+
     except Exception as e:
         print(f"Lite download error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
@@ -1065,12 +1065,12 @@ def api_audio_stream(video_id):
             'no_warnings': True,
             'extract_flat': False,
         }
-        
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
-            
+
             audio_url = info.get('url')
-            
+
             if not audio_url:
                 formats = info.get('formats', [])
                 for fmt in formats:
@@ -1078,7 +1078,7 @@ def api_audio_stream(video_id):
                         audio_url = fmt.get('url')
                         if audio_url and 'googlevideo.com' in audio_url:
                             break
-                
+
                 if not audio_url:
                     for fmt in formats:
                         if fmt.get('acodec') != 'none':
@@ -1086,7 +1086,7 @@ def api_audio_stream(video_id):
                             if 'googlevideo.com' in url:
                                 audio_url = url
                                 break
-            
+
             if audio_url and 'googlevideo.com' in audio_url:
                 return jsonify({
                     'success': True,
@@ -1105,7 +1105,7 @@ def api_audio_stream(video_id):
                 })
             else:
                 return jsonify({'success': False, 'error': '音声URLが見つかりませんでした'}), 404
-                
+
     except Exception as e:
         print(f"Audio stream error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -1114,7 +1114,7 @@ def api_audio_stream(video_id):
 @login_required
 def api_thumbnail_download(video_id):
     quality = request.args.get('quality', 'hq')
-    
+
     quality_map = {
         'max': 'maxresdefault',
         'sd': 'sddefault',
@@ -1122,18 +1122,18 @@ def api_thumbnail_download(video_id):
         'mq': 'mqdefault',
         'default': 'default'
     }
-    
+
     thumbnail_name = quality_map.get(quality, 'hqdefault')
     thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/{thumbnail_name}.jpg"
-    
+
     try:
         res = http_session.get(thumbnail_url, headers=get_random_headers(), timeout=10)
-        
+
         if res.status_code == 200 and len(res.content) > 1000:
             response = Response(res.content, mimetype='image/jpeg')
             response.headers['Content-Disposition'] = f'attachment; filename="{video_id}_{thumbnail_name}.jpg"'
             return response
-        
+
         if quality != 'hq':
             fallback_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
             res = http_session.get(fallback_url, headers=get_random_headers(), timeout=10)
@@ -1141,9 +1141,9 @@ def api_thumbnail_download(video_id):
                 response = Response(res.content, mimetype='image/jpeg')
                 response.headers['Content-Disposition'] = f'attachment; filename="{video_id}_hqdefault.jpg"'
                 return response
-        
+
         return jsonify({'error': 'サムネイルの取得に失敗しました', 'success': False}), 404
-        
+
     except Exception as e:
         print(f"Thumbnail download error: {e}")
         return jsonify({'error': str(e), 'success': False}), 500
@@ -1264,13 +1264,13 @@ def getcode():
 @login_required
 def api_getcode():
     url = request.args.get('url', '')
-    
+
     if not url:
         return jsonify({'success': False, 'error': 'URLが必要です'})
-    
+
     if not url.startswith('http://') and not url.startswith('https://'):
         return jsonify({'success': False, 'error': '有効なURLを入力してください'})
-    
+
     try:
         headers = {
             'User-Agent': random.choice(USER_AGENTS),
@@ -1279,10 +1279,10 @@ def api_getcode():
             'Accept-Encoding': 'gzip, deflate',
             'Connection': 'keep-alive',
         }
-        
+
         res = http_session.get(url, headers=headers, timeout=15, allow_redirects=True)
         res.raise_for_status()
-        
+
         content_type = res.headers.get('Content-Type', '')
         if 'text/html' in content_type or 'text/plain' in content_type or 'application/xml' in content_type or 'text/xml' in content_type:
             try:
@@ -1291,7 +1291,7 @@ def api_getcode():
                 code = res.content.decode('utf-8', errors='replace')
         else:
             code = res.content.decode('utf-8', errors='replace')
-        
+
         return jsonify({
             'success': True,
             'url': url,
@@ -1299,7 +1299,7 @@ def api_getcode():
             'status_code': res.status_code,
             'content_type': content_type
         })
-        
+
     except requests.exceptions.Timeout:
         return jsonify({'success': False, 'error': 'リクエストがタイムアウトしました'})
     except requests.exceptions.ConnectionError:
@@ -1308,6 +1308,430 @@ def api_getcode():
         return jsonify({'success': False, 'error': f'HTTPエラー: {e.response.status_code}'})
     except Exception as e:
         return jsonify({'success': False, 'error': f'エラー: {str(e)}'})
+
+CONVERTHUB_API_KEY = '155|hIxuoYFETaU54yeGE2zPWOw0NiSatCOhvJJYKy4Cb48c7d61'
+TRANSLOADIT_API_KEY = 'R244EKuonluFkwhTYOu85vi6ZPm6mmZV'
+TRANSLOADIT_SECRET = '4zVZ7eQm16qawPil8B4NJRr68kkCdMXQkd8NbNaq'
+FREECONVERT_API_KEY = 'api_production_15cc009b9ac13759fb43f4946b3c950fee5e56e2f0214f242f6e9e4efc3093df.69393f3ea22aa85dd55c84ff.69393fa9142a194b36417393'
+APIFY_API_TOKEN = 'apify_api_fpYkf6q1fqfJIz5S8bx4fcOeaP6CIM0iYpnu'
+
+@app.route('/api/convert/converthub/<video_id>')
+@login_required
+def api_convert_converthub(video_id):
+    """ConvertHub APIを使用してファイル形式を変換"""
+    target_format = request.args.get('format', 'mp3')
+    
+    if not CONVERTHUB_API_KEY:
+        return jsonify({'success': False, 'error': 'ConvertHub APIキーが設定されていません'}), 400
+    
+    try:
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        unique_id = f"{video_id}_{int(time.time())}"
+        
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_convert_{unique_id}.%(ext)s'),
+            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        source_file = None
+        for ext in ['m4a', 'webm', 'mp3', 'opus']:
+            check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_convert_{unique_id}.{ext}')
+            if os.path.exists(check_path):
+                source_file = check_path
+                break
+        
+        if not source_file:
+            return jsonify({'success': False, 'error': 'ダウンロードに失敗しました'}), 500
+        
+        headers = {
+            'Authorization': f'Bearer {CONVERTHUB_API_KEY}'
+        }
+        
+        with open(source_file, 'rb') as f:
+            files = {'file': f}
+            data = {'target_format': target_format}
+            res = http_session.post(
+                'https://api.converthub.com/v2/convert',
+                files=files,
+                data=data,
+                headers=headers,
+                timeout=120
+            )
+        
+        if res.status_code == 200:
+            job_data = res.json()
+            job_id = job_data.get('job_id')
+            
+            for _ in range(60):
+                time.sleep(2)
+                status_res = http_session.get(
+                    f'https://api.converthub.com/v2/jobs/{job_id}',
+                    headers=headers,
+                    timeout=30
+                )
+                if status_res.status_code == 200:
+                    status = status_res.json()
+                    if status.get('status') == 'completed':
+                        download_url = status.get('result', {}).get('download_url')
+                        if download_url:
+                            if os.path.exists(source_file):
+                                os.remove(source_file)
+                            return jsonify({
+                                'success': True,
+                                'url': download_url,
+                                'format': target_format,
+                                'title': title,
+                                'method': 'converthub'
+                            })
+                    elif status.get('status') == 'failed':
+                        break
+            
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': '変換がタイムアウトしました'}), 500
+        else:
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': 'ConvertHub APIエラー'}), 500
+            
+    except Exception as e:
+        print(f"ConvertHub convert error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/convert/transloadit/<video_id>')
+@login_required
+def api_convert_transloadit(video_id):
+    """Transloadit APIを使用してファイル形式を変換"""
+    target_format = request.args.get('format', 'mp3')
+    bitrate = request.args.get('bitrate', '192000')
+    
+    if not TRANSLOADIT_API_KEY:
+        return jsonify({'success': False, 'error': 'Transloadit APIキーが設定されていません'}), 400
+    
+    try:
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        unique_id = f"{video_id}_{int(time.time())}"
+        
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_transloadit_{unique_id}.%(ext)s'),
+            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        source_file = None
+        for ext in ['m4a', 'webm', 'mp3', 'opus']:
+            check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_transloadit_{unique_id}.{ext}')
+            if os.path.exists(check_path):
+                source_file = check_path
+                break
+        
+        if not source_file:
+            return jsonify({'success': False, 'error': 'ダウンロードに失敗しました'}), 500
+        
+        import hashlib
+        import hmac
+        
+        expires = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        expires_str = expires.strftime('%Y/%m/%d %H:%M:%S+00:00')
+        
+        params = {
+            'auth': {
+                'key': TRANSLOADIT_API_KEY,
+                'expires': expires_str
+            },
+            'steps': {
+                ':original': {
+                    'robot': '/upload/handle'
+                },
+                'encoded': {
+                    'robot': '/audio/encode',
+                    'use': ':original',
+                    'preset': target_format,
+                    'bitrate': int(bitrate),
+                    'ffmpeg_stack': 'v6.0.0'
+                }
+            }
+        }
+        
+        params_json = json.dumps(params)
+        
+        if TRANSLOADIT_SECRET:
+            signature = hmac.new(
+                TRANSLOADIT_SECRET.encode('utf-8'),
+                params_json.encode('utf-8'),
+                hashlib.sha384
+            ).hexdigest()
+        else:
+            signature = ''
+        
+        with open(source_file, 'rb') as f:
+            files = {'file': f}
+            data = {'params': params_json}
+            if signature:
+                data['signature'] = f'sha384:{signature}'
+            
+            res = http_session.post(
+                'https://api2.transloadit.com/assemblies',
+                files=files,
+                data=data,
+                timeout=120
+            )
+        
+        if res.status_code in [200, 201, 302]:
+            assembly_data = res.json()
+            assembly_url = assembly_data.get('assembly_ssl_url') or assembly_data.get('assembly_url')
+            
+            if assembly_url:
+                for _ in range(60):
+                    time.sleep(2)
+                    status_res = http_session.get(assembly_url, timeout=30)
+                    if status_res.status_code == 200:
+                        status = status_res.json()
+                        if status.get('ok') == 'ASSEMBLY_COMPLETED':
+                            results = status.get('results', {})
+                            encoded = results.get('encoded', [])
+                            if encoded and len(encoded) > 0:
+                                download_url = encoded[0].get('ssl_url') or encoded[0].get('url')
+                                if download_url:
+                                    if os.path.exists(source_file):
+                                        os.remove(source_file)
+                                    return jsonify({
+                                        'success': True,
+                                        'url': download_url,
+                                        'format': target_format,
+                                        'title': title,
+                                        'method': 'transloadit'
+                                    })
+                        elif status.get('error'):
+                            break
+            
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': '変換がタイムアウトしました'}), 500
+        else:
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': 'Transloadit APIエラー'}), 500
+            
+    except Exception as e:
+        print(f"Transloadit convert error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/convert/freeconvert/<video_id>')
+@login_required
+def api_convert_freeconvert(video_id):
+    """FreeConvert APIを使用してファイル形式を変換"""
+    target_format = request.args.get('format', 'mp3')
+    
+    if not FREECONVERT_API_KEY:
+        return jsonify({'success': False, 'error': 'FreeConvert APIキーが設定されていません'}), 400
+    
+    try:
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        unique_id = f"{video_id}_{int(time.time())}"
+        
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_freeconvert_{unique_id}.%(ext)s'),
+            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        source_file = None
+        source_format = 'm4a'
+        for ext in ['m4a', 'webm', 'mp3', 'opus']:
+            check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_freeconvert_{unique_id}.{ext}')
+            if os.path.exists(check_path):
+                source_file = check_path
+                source_format = ext
+                break
+        
+        if not source_file:
+            return jsonify({'success': False, 'error': 'ダウンロードに失敗しました'}), 500
+        
+        headers = {
+            'Authorization': f'Bearer {FREECONVERT_API_KEY}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        
+        import base64
+        with open(source_file, 'rb') as f:
+            file_data = base64.b64encode(f.read()).decode('utf-8')
+        
+        job_payload = {
+            'tasks': {
+                'import-1': {
+                    'operation': 'import/base64',
+                    'file': file_data,
+                    'filename': f'audio.{source_format}'
+                },
+                'convert-1': {
+                    'operation': 'convert',
+                    'input': 'import-1',
+                    'input_format': source_format,
+                    'output_format': target_format,
+                    'options': {
+                        'audio_bitrate': '192'
+                    }
+                },
+                'export-1': {
+                    'operation': 'export/url',
+                    'input': 'convert-1'
+                }
+            }
+        }
+        
+        res = http_session.post(
+            'https://api.freeconvert.com/v1/process/jobs',
+            json=job_payload,
+            headers=headers,
+            timeout=120
+        )
+        
+        if res.status_code in [200, 201]:
+            job_data = res.json()
+            job_id = job_data.get('id')
+            
+            for _ in range(60):
+                time.sleep(2)
+                status_res = http_session.get(
+                    f'https://api.freeconvert.com/v1/process/jobs/{job_id}',
+                    headers=headers,
+                    timeout=30
+                )
+                if status_res.status_code == 200:
+                    status = status_res.json()
+                    if status.get('status') == 'completed':
+                        tasks = status.get('tasks', {})
+                        export_task = tasks.get('export-1', {})
+                        if export_task.get('status') == 'completed':
+                            result = export_task.get('result', {})
+                            download_url = result.get('url')
+                            if download_url:
+                                if os.path.exists(source_file):
+                                    os.remove(source_file)
+                                return jsonify({
+                                    'success': True,
+                                    'url': download_url,
+                                    'format': target_format,
+                                    'title': title,
+                                    'method': 'freeconvert'
+                                })
+                    elif status.get('status') == 'error':
+                        break
+            
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': '変換がタイムアウトしました'}), 500
+        else:
+            if os.path.exists(source_file):
+                os.remove(source_file)
+            return jsonify({'success': False, 'error': 'FreeConvert APIエラー'}), 500
+            
+    except Exception as e:
+        print(f"FreeConvert convert error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/convert/apify/<video_id>')
+@login_required
+def api_convert_apify(video_id):
+    """Apify Audio File Converter APIを使用してファイル形式を変換"""
+    target_format = request.args.get('format', 'mp3')
+    
+    if not APIFY_API_TOKEN:
+        return jsonify({'success': False, 'error': 'Apify APIトークンが設定されていません'}), 400
+    
+    try:
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+        unique_id = f"{video_id}_{int(time.time())}"
+        
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_apify_{unique_id}.%(ext)s'),
+            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True)
+            title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        source_file = None
+        for ext in ['m4a', 'webm', 'mp3', 'opus']:
+            check_path = os.path.join(DOWNLOAD_DIR, f'chocotube_apify_{unique_id}.{ext}')
+            if os.path.exists(check_path):
+                source_file = check_path
+                break
+        
+        if not source_file:
+            return jsonify({'success': False, 'error': 'ダウンロードに失敗しました'}), 500
+        
+        audio_stream_res = http_session.get(
+            f'https://api.apify.com/v2/key-value-stores/temp/records/audio_{unique_id}',
+            timeout=5
+        )
+        
+        upload_headers = {
+            'Content-Type': 'application/octet-stream'
+        }
+        
+        with open(source_file, 'rb') as f:
+            audio_data = f.read()
+        
+        apify_payload = {
+            'audioUrl': f'https://www.youtube.com/watch?v={video_id}',
+            'targetFormat': target_format
+        }
+        
+        res = http_session.post(
+            f'https://api.apify.com/v2/acts/akash9078~audio-file-converter/run-sync-get-dataset-items?token={APIFY_API_TOKEN}',
+            json=apify_payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=300
+        )
+        
+        if os.path.exists(source_file):
+            os.remove(source_file)
+        
+        if res.status_code == 200:
+            result_data = res.json()
+            if isinstance(result_data, list) and len(result_data) > 0:
+                file_url = result_data[0].get('fileUrl')
+                if file_url:
+                    return jsonify({
+                        'success': True,
+                        'url': file_url,
+                        'format': target_format,
+                        'title': title,
+                        'method': 'apify'
+                    })
+            return jsonify({'success': False, 'error': '変換結果が見つかりませんでした'}), 500
+        else:
+            return jsonify({'success': False, 'error': 'Apify APIエラー'}), 500
+            
+    except Exception as e:
+        print(f"Apify convert error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.after_request
 def add_header(response):
