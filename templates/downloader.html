@@ -471,51 +471,52 @@
 
 .external-embed-container {
     display: none;
-    max-width: 1200px;
-    margin: 0 auto;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--bg-primary);
 }
 
 .external-embed-container.show {
     display: block;
 }
 
-.external-embed-header {
+.external-back-bar {
+    height: 50px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.external-embed-title {
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    padding: 0 16px;
+    border-bottom: 1px solid #2a2a4a;
 }
 
 .back-to-downloader-btn {
-    padding: 10px 20px;
-    background: var(--accent-primary);
-    border: none;
-    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: #fff;
+    text-decoration: none;
+    padding: 8px 16px;
+    background: #8b4513;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
+    border: none;
     cursor: pointer;
     transition: background 0.3s;
 }
 
 .back-to-downloader-btn:hover {
-    background: var(--accent-secondary);
+    background: #d2691e;
 }
 
 .external-embed-frame {
     width: 100%;
-    height: calc(100vh - 200px);
-    min-height: 600px;
+    height: calc(100% - 50px);
     border: none;
-    border-radius: 12px;
-    background: var(--bg-card);
+    display: block;
 }
 
 .other-methods-container {
@@ -821,13 +822,9 @@
 </div>
 
 <div class="external-embed-container" id="externalEmbedContainer">
-    <div class="external-embed-header">
-        <h1 class="external-embed-title">
-            <span>🌐</span>
-            外部サイト（SubEasy）
-        </h1>
+    <div class="external-back-bar">
         <button class="back-to-downloader-btn" onclick="hideExternalEmbed()">
-            ← ダウンローダーに戻る
+            📥 ダウンローダーに戻る
         </button>
     </div>
     <iframe class="external-embed-frame" id="externalFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
