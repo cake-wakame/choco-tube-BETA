@@ -18,6 +18,15 @@ R244EKuonluFkwhTYOu85vi6ZPm6mmZV
 オーソシークレット:
 
 4zVZ7eQm16qawPil8B4NJRr68kkCdMXQkd8NbNaq
+#
+
+
+認証キー:
+
+mTMNtHcTK4cg7NkUMwMn9OYS7irw4qvL
+オーソシークレット:
+
+bscmKzXSOmMEH7tKrXCyJpap2QQrlaL7k66ckspg
 ##
 freeconvert:
 こちらがあなたの個人アクセストークンです。これが唯一の時間です。表示されているので、失くしないでください。このトークンを使ってAPIを作成できます。 要求:
