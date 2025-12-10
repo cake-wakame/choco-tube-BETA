@@ -18,6 +18,13 @@
                 <option value="0" {% if vc == '0' %}selected{% endif %}>Education</option>
             </select>
         </div>
+        <div class="settings-item">
+            <label for="searchModeSelect">検索モード:</label>
+            <select id="searchModeSelect">
+                <option value="youtube" {% if search_mode == 'youtube' %}selected{% endif %}>YouTube API → Invidious</option>
+                <option value="invidious" {% if search_mode == 'invidious' %}selected{% endif %}>Invidious → YouTube API</option>
+            </select>
+        </div>
     </div>
 
     <div class="search-results">
@@ -88,6 +95,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const vcSelect = document.getElementById('vcSelect');
+    const searchModeSelect = document.getElementById('searchModeSelect');
 
     function getCookie(name) {
         const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
@@ -129,6 +137,21 @@ document.addEventListener('DOMContentLoaded', function() {
         vcSelect.addEventListener('change', function() {
             setCookie('vc', this.value, 30);
             updateLinks(this.value);
+        });
+    }
+
+    if (searchModeSelect) {
+        const savedSearchMode = getCookie('search_mode');
+        if (savedSearchMode) {
+            searchModeSelect.value = savedSearchMode;
+        }
+
+        searchModeSelect.addEventListener('change', function() {
+            setCookie('search_mode', this.value, 30);
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.get('q')) {
+                window.location.reload();
+            }
         });
     }
 });
