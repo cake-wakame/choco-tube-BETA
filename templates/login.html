@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>-ログイン- チョコ学習協会</title>
+<title>チョコ学習協会</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
@@ -71,23 +71,25 @@ body {
     position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
     color:#fff; text-align:center;
 }
-.logo { margin-bottom:20px; }
-.logo-icon { font-size:72px; } /* 🍫大きさを元に戻す */
+.logo { margin-bottom:30px; }
+.logo-icon { font-size:48px; }
 .logo-text { display:block; font-size:24px; font-weight:700; color:#fff; margin-top:10px; }
 .form-group { margin-bottom:20px; }
 .form-group label { display:block; color:#fff; margin-bottom:8px; font-weight:500; }
 .form-group input { width:100%; padding:12px 16px; border:none; border-radius:10px; background:rgba(255,255,255,0.2); color:#fff; font-size:16px; }
-.form-group input::placeholder { color: rgba(255,255,255,0.6); }
+.form-group input::placeholder { color: rgba(255, 255, 255, 0.6); }
 .login-btn { width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg,#e94560,#ff6b6b); color:#fff; font-size:16px; font-weight:700; cursor:pointer; }
 
-/* コピーライト */
-.copyright {
-    margin-top:20px;
-    font-size:14px;
-    color:#fff;
+/* ===== エラーメッセージ ===== */
+.error-message {
+    background: rgba(233,69,96,0.2);
+    border: 1px solid #e94560;
+    color: #ff6b6b;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
 }
-.copyright a { color:#fff; text-decoration:none; }
-.copyright a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -101,29 +103,25 @@ body {
 <!-- 歴史画面 -->
 <div class="history-screen" id="history">
     <button class="skip-btn" onclick="skipHistory()">スキップ</button>
-    <div class="history-line" style="animation-delay:0s;">
-        🍫 チョコ学習協会へようこそ。
-    </div>
-    <div class="history-line" style="animation-delay:2s;">
-        約4000年前、古代メソアメリカでカカオは神聖な作物でした。
-    </div>
-    <div class="history-line" style="animation-delay:4s;">
-        その後ヨーロッパに渡り、甘味や香辛料が加えられました。
-    </div>
-    <div class="history-line" style="animation-delay:6s;">
-        19世紀、固形チョコレートが誕生しスイーツ文化が花開きます。
-    </div>
-    <div class="history-line" style="animation-delay:8s;">
-        さあ、あなたもチョコのありがたさを感じましょう──。
-    </div>
+    <div class="history-line" style="animation-delay:0s;">🍫 チョコ学習協会へようこそ。</div>
+    <div class="history-line" style="animation-delay:2s;">約4000年前、古代メソアメリカでカカオは神聖な作物でした。</div>
+    <div class="history-line" style="animation-delay:4s;">その後ヨーロッパに渡り、甘味や香辛料が加えられました。</div>
+    <div class="history-line" style="animation-delay:6s;">19世紀、固形チョコレートが誕生しスイーツ文化が花開きます。</div>
+    <div class="history-line" style="animation-delay:8s;">さあ、あなたもチョコのありがたさを感じましょう──。</div>
 </div>
 
 <!-- ログイン画面 -->
 <div class="login-container" id="login">
     <div class="logo">
-        <span class="logo-icon">🍫</span>
-        <span class="logo-text">チョコ学習協会 -login-</span>
+        <span class="logo-icon" style="font-size:48px;">🍫</span>
+        <span class="logo-text">チョコ学習協会 - login -</span>
     </div>
+
+    <!-- エラーメッセージ表示 -->
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+
     <form method="post" action="/login">
         <div class="form-group">
             <label for="password">パスワード</label>
@@ -131,8 +129,10 @@ body {
         </div>
         <button type="submit" class="login-btn">ここを押してアクセス</button>
     </form>
-    <div class="copyright">
-        <a href="https://scratch.mit.edu/users/choco-banana-/" target="_blank">&copy; 2025 チョコ学習協会</a>
+
+    <!-- コピーライト -->
+    <div style="margin-top:20px;">
+        <a href="https://scratch.mit.edu/users/choco-banana-/" target="_blank" style="color:#fff; text-decoration:none;">©2025 チョコ学習協会</a>
     </div>
 </div>
 
@@ -174,7 +174,7 @@ function showLogin(){
     },1000);
 }
 
-// 自動切替（文章終了直後に切替）
+// 自動切替（10秒後）
 setTimeout(showLogin,10000);
 function skipHistory(){ showLogin(); }
 </script>
