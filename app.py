@@ -865,6 +865,50 @@ def cleanup_old_downloads():
     except Exception as e:
         print(f"Cleanup error: {e}")
 
+def get_yt_dlp_base_opts(output_template, cookie_file=None):
+    """YouTube bot対策を回避するための共通yt-dlpオプションを返す"""
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'outtmpl': output_template,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Upgrade-Insecure-Requests': '1',
+        },
+        'socket_timeout': 60,
+        'retries': 5,
+        'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+        'age_limit': None,
+        'geo_bypass': True,
+        'geo_bypass_country': 'JP',
+    }
+    if cookie_file:
+        opts['cookiefile'] = cookie_file
+    return opts
+
+def create_youtube_cookies(cookie_file):
+    """YouTube用のcookieファイルを作成する"""
+    cookies_content = """# Netscape HTTP Cookie File
+.youtube.com    TRUE    /       TRUE    2147483647      CONSENT PENDING+987
+.youtube.com    TRUE    /       TRUE    2147483647      SOCS    CAESEwgDEgk2MjQyNTI1NzkaAmphIAEaBgiA_LyuBg
+.youtube.com    TRUE    /       TRUE    2147483647      PREF    tz=Asia.Tokyo&hl=ja&gl=JP
+.youtube.com    TRUE    /       TRUE    2147483647      GPS     1
+.youtube.com    TRUE    /       TRUE    2147483647      YSC     DwKYllHNwuw
+.youtube.com    TRUE    /       TRUE    2147483647      VISITOR_INFO1_LIVE      random_visitor_id
+"""
+    with open(cookie_file, 'w') as f:
+        f.write(cookies_content)
+
 @app.route('/api/internal-download/<video_id>')
 @login_required
 def api_internal_download(video_id):
@@ -880,8 +924,12 @@ def api_internal_download(video_id):
 
     try:
         cookies_content = """# Netscape HTTP Cookie File
-.youtube.com    TRUE    /       TRUE    2147483647      CONSENT YES+cb
-.youtube.com    TRUE    /       TRUE    2147483647      PREF    hl=ja&gl=JP
+.youtube.com    TRUE    /       TRUE    2147483647      CONSENT PENDING+987
+.youtube.com    TRUE    /       TRUE    2147483647      SOCS    CAESEwgDEgk2MjQyNTI1NzkaAmphIAEaBgiA_LyuBg
+.youtube.com    TRUE    /       TRUE    2147483647      PREF    tz=Asia.Tokyo&hl=ja&gl=JP
+.youtube.com    TRUE    /       TRUE    2147483647      GPS     1
+.youtube.com    TRUE    /       TRUE    2147483647      YSC     DwKYllHNwuw
+.youtube.com    TRUE    /       TRUE    2147483647      VISITOR_INFO1_LIVE      random_visitor_id
 """
         with open(cookie_file, 'w') as f:
             f.write(cookies_content)
@@ -891,11 +939,25 @@ def api_internal_download(video_id):
             'no_warnings': True,
             'cookiefile': cookie_file,
             'http_headers': {
-                'User-Agent': random.choice(USER_AGENTS),
-                'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
             },
-            'socket_timeout': 30,
-            'retries': 3,
+            'socket_timeout': 60,
+            'retries': 5,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+            'age_limit': None,
+            'geo_bypass': True,
+            'geo_bypass_country': 'JP',
         }
 
         if format_type == 'mp3':
@@ -1328,17 +1390,19 @@ def api_convert_converthub(video_id):
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         unique_id = f"{video_id}_{int(time.time())}"
         
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_convert_{unique_id}.%(ext)s'),
-            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
-        }
+        cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_convert_{unique_id}.txt')
+        create_youtube_cookies(cookie_file)
+        
+        output_template = os.path.join(DOWNLOAD_DIR, f'chocotube_convert_{unique_id}.%(ext)s')
+        ydl_opts = get_yt_dlp_base_opts(output_template, cookie_file)
+        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        if os.path.exists(cookie_file):
+            os.remove(cookie_file)
         
         source_file = None
         for ext in ['m4a', 'webm', 'mp3', 'opus']:
@@ -1419,17 +1483,19 @@ def api_convert_transloadit(video_id):
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         unique_id = f"{video_id}_{int(time.time())}"
         
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_transloadit_{unique_id}.%(ext)s'),
-            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
-        }
+        cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_transloadit_{unique_id}.txt')
+        create_youtube_cookies(cookie_file)
+        
+        output_template = os.path.join(DOWNLOAD_DIR, f'chocotube_transloadit_{unique_id}.%(ext)s')
+        ydl_opts = get_yt_dlp_base_opts(output_template, cookie_file)
+        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        if os.path.exists(cookie_file):
+            os.remove(cookie_file)
         
         source_file = None
         for ext in ['m4a', 'webm', 'mp3', 'opus']:
@@ -1543,17 +1609,19 @@ def api_convert_freeconvert(video_id):
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         unique_id = f"{video_id}_{int(time.time())}"
         
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_freeconvert_{unique_id}.%(ext)s'),
-            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
-        }
+        cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_freeconvert_{unique_id}.txt')
+        create_youtube_cookies(cookie_file)
+        
+        output_template = os.path.join(DOWNLOAD_DIR, f'chocotube_freeconvert_{unique_id}.%(ext)s')
+        ydl_opts = get_yt_dlp_base_opts(output_template, cookie_file)
+        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        if os.path.exists(cookie_file):
+            os.remove(cookie_file)
         
         source_file = None
         source_format = 'm4a'
@@ -1664,17 +1732,19 @@ def api_convert_apify(video_id):
         video_url = f"https://www.youtube.com/watch?v={video_id}"
         unique_id = f"{video_id}_{int(time.time())}"
         
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, f'chocotube_apify_{unique_id}.%(ext)s'),
-            'http_headers': {'User-Agent': random.choice(USER_AGENTS)},
-        }
+        cookie_file = os.path.join(DOWNLOAD_DIR, f'cookies_apify_{unique_id}.txt')
+        create_youtube_cookies(cookie_file)
+        
+        output_template = os.path.join(DOWNLOAD_DIR, f'chocotube_apify_{unique_id}.%(ext)s')
+        ydl_opts = get_yt_dlp_base_opts(output_template, cookie_file)
+        ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=True)
             title = sanitize_filename(info.get('title', video_id) if info else video_id)
+        
+        if os.path.exists(cookie_file):
+            os.remove(cookie_file)
         
         source_file = None
         for ext in ['m4a', 'webm', 'mp3', 'opus']:
