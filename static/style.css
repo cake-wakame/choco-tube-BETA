@@ -537,6 +537,26 @@ body {
   cursor: pointer;
 }
 
+.edu-source-selector {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edu-source-selector label {
+  color: var(--text-secondary);
+}
+
+.edu-source-selector select {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
 .video-details {
   background: var(--bg-card);
   border-radius: 12px;
