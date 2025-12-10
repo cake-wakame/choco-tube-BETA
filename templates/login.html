@@ -1,117 +1,183 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ログイン - チョコ学習協会</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo-icon {
-            font-size: 48px;
-        }
-        .logo-text {
-            display: block;
-            font-size: 24px;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 10px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            color: #fff;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: background 0.3s;
-        }
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .form-group input:focus {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #e94560, #ff6b6b);
-            color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
-        }
-        .error-message {
-            background: rgba(233, 69, 96, 0.2);
-            border: 1px solid #e94560;
-            color: #ff6b6b;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>-ログイン- チョコ学習協会</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Noto Sans JP',sans-serif;
+    background:#0f3460;
+    overflow:hidden;
+    min-height:100vh;
+}
+
+/* ===== 歴史パーティクル ===== */
+.particle-container { position:fixed; inset:0; pointer-events:none; z-index:-1; }
+.particle {
+    position:absolute;
+    width:6px; height:6px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.8);
+    animation: floatParticle linear infinite;
+}
+@keyframes floatParticle {
+    0% { transform: translate(0,0) scale(1); opacity:1; }
+    50% { transform: translate(20px, -20px) scale(1.2); opacity:0.7; }
+    100% { transform: translate(-20px, 20px) scale(1); opacity:1; }
+}
+
+/* ===== ログインパーティクル ===== */
+.login-particle-container { position:fixed; inset:0; pointer-events:none; z-index:-1; display:none; }
+.login-particle {
+    position:absolute;
+    width:3px; height:3px;
+    background:rgba(255,255,255,0.9);
+    border-radius:50%;
+    animation: fallParticle linear infinite;
+}
+@keyframes fallParticle {
+    0% { transform: translateY(-5px); opacity:1; }
+    100% { transform: translateY(110vh); opacity:0.3; }
+}
+
+/* ===== 歴史スクリーン ===== */
+.history-screen {
+    position:fixed; inset:0;
+    background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px; text-align:center; color:#fff; opacity:1; transition:opacity 1s;
+}
+.history-line {
+    font-size:22px; max-width:700px; opacity:0; animation: fadeIn 2s forwards; margin-bottom:20px;
+}
+@keyframes fadeIn { 0%{opacity:0; transform:translateY(10px);} 100%{opacity:1; transform:translateY(0);} }
+.skip-btn {
+    position:absolute; top:20px; right:20px; padding:10px 18px;
+    background:rgba(255,255,255,0.2); border-radius:8px; color:#fff;
+    border:1px solid rgba(255,255,255,0.4); cursor:pointer; font-size:14px;
+    backdrop-filter:blur(4px); transition:0.2s;
+}
+.skip-btn:hover { background: rgba(255,255,255,0.35); }
+
+/* ===== ログイン画面 ===== */
+.login-container {
+    display:none; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+    border-radius:20px; padding:40px; width:100%; max-width:400px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1);
+    position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+    color:#fff; text-align:center;
+}
+.logo { margin-bottom:20px; }
+.logo-icon { font-size:72px; } /* 🍫大きさを元に戻す */
+.logo-text { display:block; font-size:24px; font-weight:700; color:#fff; margin-top:10px; }
+.form-group { margin-bottom:20px; }
+.form-group label { display:block; color:#fff; margin-bottom:8px; font-weight:500; }
+.form-group input { width:100%; padding:12px 16px; border:none; border-radius:10px; background:rgba(255,255,255,0.2); color:#fff; font-size:16px; }
+.form-group input::placeholder { color: rgba(255,255,255,0.6); }
+.login-btn { width:100%; padding:14px; border:none; border-radius:10px; background:linear-gradient(135deg,#e94560,#ff6b6b); color:#fff; font-size:16px; font-weight:700; cursor:pointer; }
+
+/* コピーライト */
+.copyright {
+    margin-top:20px;
+    font-size:14px;
+    color:#fff;
+}
+.copyright a { color:#fff; text-decoration:none; }
+.copyright a:hover { text-decoration:underline; }
+</style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo">
-            <span class="logo-icon">🍫</span>
-            <span class="logo-text">チョコ学習協会-login</span>
-        </div>
-        {% if error %}
-        <div class="error-message">{{ error }}</div>
-        {% endif %}
-        <form method="post" action="/login">
-            <div class="form-group">
-                <label for="password">パスワード</label>
-                <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
-            </div>
-            <button type="submit" class="login-btn">さあアクセスしてチョコを楽しもう</button>
-        </form>
+
+<!-- 歴史用パーティクル -->
+<div class="particle-container" id="particleContainer"></div>
+
+<!-- ログイン用パーティクル -->
+<div class="login-particle-container" id="loginParticleContainer"></div>
+
+<!-- 歴史画面 -->
+<div class="history-screen" id="history">
+    <button class="skip-btn" onclick="skipHistory()">スキップ</button>
+    <div class="history-line" style="animation-delay:0s;">
+        🍫 チョコ学習協会へようこそ。
     </div>
+    <div class="history-line" style="animation-delay:2s;">
+        約4000年前、古代メソアメリカでカカオは神聖な作物でした。
+    </div>
+    <div class="history-line" style="animation-delay:4s;">
+        その後ヨーロッパに渡り、甘味や香辛料が加えられました。
+    </div>
+    <div class="history-line" style="animation-delay:6s;">
+        19世紀、固形チョコレートが誕生しスイーツ文化が花開きます。
+    </div>
+    <div class="history-line" style="animation-delay:8s;">
+        さあ、あなたもチョコのありがたさを感じましょう──。
+    </div>
+</div>
+
+<!-- ログイン画面 -->
+<div class="login-container" id="login">
+    <div class="logo">
+        <span class="logo-icon">🍫</span>
+        <span class="logo-text">チョコ学習協会 -login-</span>
+    </div>
+    <form method="post" action="/login">
+        <div class="form-group">
+            <label for="password">パスワード</label>
+            <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
+        </div>
+        <button type="submit" class="login-btn">ここを押してアクセス</button>
+    </form>
+    <div class="copyright">
+        <a href="https://scratch.mit.edu/users/choco-banana-/" target="_blank">&copy; 2025 チョコ学習協会</a>
+    </div>
+</div>
+
+<script>
+// ===== 歴史用パーティクル生成 =====
+const particleContainer = document.getElementById("particleContainer");
+for(let i=0;i<40;i++){
+    const p = document.createElement("div");
+    p.className="particle";
+    p.style.left = Math.random()*100+"vw";
+    p.style.top = Math.random()*100+"vh";
+    p.style.width = (3+Math.random()*5)+"px";
+    p.style.height = p.style.width;
+    p.style.animationDuration = (3+Math.random()*4)+"s";
+    particleContainer.appendChild(p);
+}
+
+// ===== ログイン用パーティクル生成 =====
+const loginParticleContainer = document.getElementById("loginParticleContainer");
+for(let i=0;i<60;i++){
+    const lp = document.createElement("div");
+    lp.className="login-particle";
+    lp.style.left = Math.random()*100+"vw";
+    lp.style.top = (-Math.random()*100)+"vh";
+    lp.style.animationDuration = (5+Math.random()*5)+"s";
+    loginParticleContainer.appendChild(lp);
+}
+
+// ===== 歴史→ログイン切替 =====
+const history = document.getElementById("history");
+const login = document.getElementById("login");
+function showLogin(){
+    history.style.opacity="0";
+    particleContainer.style.display="none"; // 歴史演出非表示
+    loginParticleContainer.style.display="block"; // ログイン演出表示
+    setTimeout(()=>{
+        history.style.display="none";
+        login.style.display="block";
+    },1000);
+}
+
+// 自動切替（文章終了直後に切替）
+setTimeout(showLogin,10000);
+function skipHistory(){ showLogin(); }
+</script>
+
 </body>
 </html>
