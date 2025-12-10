@@ -451,6 +451,146 @@
     line-height: 1.5;
 }
 
+.external-site-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #3498DB, #2980B9);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    margin-left: auto;
+}
+
+.external-site-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.external-embed-container {
+    display: none;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.external-embed-container.show {
+    display: block;
+}
+
+.external-embed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.external-embed-title {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.back-to-downloader-btn {
+    padding: 10px 20px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.back-to-downloader-btn:hover {
+    background: var(--accent-secondary);
+}
+
+.external-embed-frame {
+    width: 100%;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+    border: none;
+    border-radius: 12px;
+    background: var(--bg-card);
+}
+
+.other-methods-container {
+    display: none;
+    margin-top: 12px;
+}
+
+.other-methods-container.show {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.show-other-methods-btn {
+    padding: 14px 24px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.show-other-methods-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.method2-formats-container {
+    display: none;
+    margin-top: 12px;
+}
+
+.method2-formats-container.show {
+    display: block;
+}
+
+.format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.format-btn {
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.format-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.format-btn.video-format {
+    border-left: 4px solid #8B4513;
+}
+
+.format-btn.audio-format {
+    border-left: 4px solid #2ECC71;
+}
+
 @media (max-width: 768px) {
     .url-input-group {
         flex-direction: column;
@@ -467,15 +607,27 @@
     .method-options {
         flex-direction: column;
     }
+
+    .downloader-title {
+        flex-wrap: wrap;
+    }
+
+    .external-site-btn {
+        margin-left: 0;
+        margin-top: 12px;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="downloader-container">
+<div class="downloader-container" id="mainDownloader">
     <h1 class="downloader-title">
         <span>📥</span>
         動画・音声ダウンローダー
+        <button class="external-site-btn" onclick="showExternalEmbed()">
+            🌐 外部サイトを埋め込んだものを使用
+        </button>
     </h1>
 
     <div class="downloader-card">
@@ -510,11 +662,19 @@
             <div class="method-section">
                 <h4 class="method-title">ダウンロード方法を選択</h4>
                 <div class="method-options">
-                    <button class="method-btn active" data-method="1" onclick="selectMethod('1')">
-                        <span>🔧</span> 方法1（高品質）
-                    </button>
-                    <button class="method-btn" data-method="2" onclick="selectMethod('2')">
+                    <button class="method-btn active" data-method="2" onclick="selectMethod('2')">
                         <span>⚡</span> 方法2（高速）
+                    </button>
+                    <button class="method-btn" data-method="8" onclick="selectMethod('8')">
+                        <span>🎯</span> 方法8（確実MP3）
+                    </button>
+                    <button class="show-other-methods-btn" onclick="toggleOtherMethods()">
+                        <span>📋</span> その他の方法
+                    </button>
+                </div>
+                <div class="other-methods-container" id="otherMethodsContainer">
+                    <button class="method-btn" data-method="1" onclick="selectMethod('1')">
+                        <span>🔧</span> 方法1（高品質）
                     </button>
                     <button class="method-btn" data-method="3" onclick="selectMethod('3')">
                         <span>🎵</span> 方法3（音声直接）
@@ -531,12 +691,9 @@
                     <button class="method-btn" data-method="7" onclick="selectMethod('7')">
                         <span>🤖</span> 方法7（Apify）
                     </button>
-                    <button class="method-btn" data-method="8" onclick="selectMethod('8')">
-                        <span>🎯</span> 方法8（確実MP3）
-                    </button>
                 </div>
                 <div class="method-description" id="methodDescription">
-                    <strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。
+                    <strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。
                 </div>
             </div>
 
@@ -550,7 +707,7 @@
                 </div>
             </div>
 
-            <div id="method1Buttons" class="download-buttons-container">
+            <div id="method1Buttons" class="download-buttons-container" style="display: none;">
                 <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
                     <span>🎬</span> MP4をダウンロード
                 </button>
@@ -559,13 +716,24 @@
                 </button>
             </div>
 
-            <div id="method2Buttons" class="download-buttons-container" style="display: none;">
-                <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
-                    <span>🎬</span> MP4をダウンロード
-                </button>
-                <button class="download-btn-main m4a-download" onclick="startDownload('m4a')">
-                    <span>🎧</span> M4A音声をダウンロード
-                </button>
+            <div id="method2Buttons" class="download-buttons-container" style="display: flex;">
+                <div style="width: 100%;">
+                    <p class="format-section-title">🎬 動画形式</p>
+                    <div class="format-grid">
+                        <button class="format-btn video-format" onclick="startDownload('mp4')">MP4</button>
+                        <button class="format-btn video-format" onclick="startDownload('webm')">WebM</button>
+                        <button class="format-btn video-format" onclick="startDownload('3gp')">3GP</button>
+                    </div>
+                    <p class="format-section-title" style="margin-top: 16px;">🎵 音声形式</p>
+                    <div class="format-grid">
+                        <button class="format-btn audio-format" onclick="startDownload('m4a')">M4A</button>
+                        <button class="format-btn audio-format" onclick="startDownload('mp3')">MP3</button>
+                        <button class="format-btn audio-format" onclick="startDownload('opus')">Opus</button>
+                        <button class="format-btn audio-format" onclick="startDownload('ogg')">OGG</button>
+                        <button class="format-btn audio-format" onclick="startDownload('wav')">WAV</button>
+                        <button class="format-btn audio-format" onclick="startDownload('aac')">AAC</button>
+                    </div>
+                </div>
             </div>
 
             <div id="method3Buttons" class="download-buttons-container" style="display: none;">
@@ -651,14 +819,50 @@
         </ul>
     </div>
 </div>
+
+<div class="external-embed-container" id="externalEmbedContainer">
+    <div class="external-embed-header">
+        <h1 class="external-embed-title">
+            <span>🌐</span>
+            外部サイト（SubEasy）
+        </h1>
+        <button class="back-to-downloader-btn" onclick="hideExternalEmbed()">
+            ← ダウンローダーに戻る
+        </button>
+    </div>
+    <iframe class="external-embed-frame" id="externalFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 let currentVideoId = '';
 let selectedQuality = '720';
-let selectedMethod = '1';
+let selectedMethod = '2';
 let selectedThumbnailQuality = 'hq';
+let otherMethodsVisible = false;
+
+function showExternalEmbed() {
+    document.getElementById('mainDownloader').style.display = 'none';
+    document.querySelector('.info-box').style.display = 'none';
+    const embedContainer = document.getElementById('externalEmbedContainer');
+    embedContainer.classList.add('show');
+    document.getElementById('externalFrame').src = 'https://www.subeasy.ai/ja-JP/youtube-to-mp4';
+}
+
+function hideExternalEmbed() {
+    document.getElementById('mainDownloader').style.display = 'block';
+    document.querySelector('.info-box').style.display = 'block';
+    const embedContainer = document.getElementById('externalEmbedContainer');
+    embedContainer.classList.remove('show');
+    document.getElementById('externalFrame').src = '';
+}
+
+function toggleOtherMethods() {
+    otherMethodsVisible = !otherMethodsVisible;
+    const container = document.getElementById('otherMethodsContainer');
+    container.classList.toggle('show', otherMethodsVisible);
+}
 
 function extractVideoId(url) {
     const patterns = [
