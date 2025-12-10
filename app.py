@@ -54,7 +54,31 @@ EDU_CONFIG_URL = "https://raw.githubusercontent.com/siawaseok3/wakame/master/vid
 STREAM_API = "https://ytdl-0et1.onrender.com/stream/"
 M3U8_API = "https://ytdl-0et1.onrender.com/m3u8/"
 
-_edu_params_cache = {'params': None, 'timestamp': 0}
+EDU_PARAM_SOURCES = {
+    'siawaseok': {
+        'name': '幸せok',
+        'url': 'https://raw.githubusercontent.com/siawaseok3/wakame/master/video_config.json',
+        'type': 'json_params'
+    },
+    'woolisbest1': {
+        'name': 'woolisbest1',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu.json',
+        'type': 'json_params'
+    },
+    'woolisbest2': {
+        'name': 'woolisbest2',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/parameter.json',
+        'type': 'json_params'
+    },
+    'kahoot': {
+        'name': 'その他',
+        'url': 'https://apis.kahoot.it/media-api/youtube/key',
+        'type': 'kahoot_key'
+    }
+}
+
+_edu_params_cache = {}
+_edu_cache_timestamp = {}
 _trending_cache = {'data': None, 'timestamp': 0}
 _thumbnail_cache = {}
 
@@ -87,26 +111,39 @@ def get_random_headers():
         'User-Agent': random.choice(USER_AGENTS)
     }
 
-def get_edu_params():
+def get_edu_params(source='siawaseok'):
     cache_duration = 300
     current_time = time.time()
 
-    if _edu_params_cache['params'] and (current_time - _edu_params_cache['timestamp']) < cache_duration:
-        return _edu_params_cache['params']
+    if source in _edu_params_cache and source in _edu_cache_timestamp:
+        if (current_time - _edu_cache_timestamp[source]) < cache_duration:
+            return _edu_params_cache[source]
 
+    source_config = EDU_PARAM_SOURCES.get(source, EDU_PARAM_SOURCES['siawaseok'])
+    
     try:
-        res = http_session.get(EDU_CONFIG_URL, headers=get_random_headers(), timeout=3)
+        res = http_session.get(source_config['url'], headers=get_random_headers(), timeout=3)
         res.raise_for_status()
-        data = res.json()
-        params = data.get('params', '')
-        if params.startswith('?'):
-            params = params[1:]
-        params = params.replace('&amp;', '&')
-        _edu_params_cache['params'] = params
-        _edu_params_cache['timestamp'] = current_time
+        
+        if source_config['type'] == 'kahoot_key':
+            data = res.json()
+            api_key = data.get('key', '')
+            if api_key:
+                params = f"autoplay=1&rel=0&modestbranding=1&key={api_key}"
+            else:
+                params = "autoplay=1&rel=0&modestbranding=1"
+        else:
+            data = res.json()
+            params = data.get('params', '')
+            if params.startswith('?'):
+                params = params[1:]
+            params = params.replace('&amp;', '&')
+        
+        _edu_params_cache[source] = params
+        _edu_cache_timestamp[source] = current_time
         return params
     except Exception as e:
-        print(f"Failed to fetch edu params: {e}")
+        print(f"Failed to fetch edu params from {source}: {e}")
         return "autoplay=1&rel=0&modestbranding=1"
 
 def safe_request(url, timeout=(2, 5)):
@@ -460,8 +497,8 @@ def get_channel_videos(channel_id, continuation=None):
         'continuation': data.get('continuation', '')
     }
 
-def get_stream_url(video_id):
-    edu_params = get_edu_params()
+def get_stream_url(video_id, edu_source='siawaseok'):
+    edu_params = get_edu_params(edu_source)
     urls = {
         'primary': None,
         'fallback': None,
@@ -748,12 +785,13 @@ def watch_education():
     playlist_index = request.args.get('index', '0')
     theme = request.cookies.get('theme', 'dark')
     proxy = request.cookies.get('proxy', 'False')
+    edu_source = request.cookies.get('edu_source', 'siawaseok')
 
     if not video_id:
         return render_template('index.html', videos=get_trending(), theme=theme)
 
     video_info = get_video_info(video_id)
-    stream_urls = get_stream_url(video_id)
+    stream_urls = get_stream_url(video_id, edu_source)
     comments = get_comments(video_id)
 
     playlist_videos = []
@@ -775,7 +813,9 @@ def watch_education():
                          playlist_id=playlist_id,
                          playlist_index=int(playlist_index),
                          playlist_videos=playlist_videos,
-                         playlist_title=playlist_title)
+                         playlist_title=playlist_title,
+                         edu_source=edu_source,
+                         edu_sources=EDU_PARAM_SOURCES)
 
 @app.route('/channel/<channel_id>')
 @login_required
