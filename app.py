@@ -1822,92 +1822,103 @@ def api_convert_direct(video_id):
                 continue
         
         title = sanitize_filename(video_info.get('title', video_id)) if video_info else video_id
+        youtube_url = f'https://www.youtube.com/watch?v={video_id}'
         
-        mp3_apis = [
-            {
-                'name': 'cobalt',
-                'url': 'https://api.cobalt.tools/api/json',
-                'method': 'POST',
-                'payload': {
-                    'url': f'https://www.youtube.com/watch?v={video_id}',
-                    'vCodec': 'h264',
-                    'vQuality': '720',
-                    'aFormat': 'mp3',
-                    'isAudioOnly': True,
-                    'filenamePattern': 'basic'
-                },
-                'headers': {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            },
-            {
-                'name': 'y2mate',
-                'url': f'https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128',
-                'method': 'REDIRECT'
-            },
-            {
-                'name': 'ssyoutube',
-                'url': f'https://ssyoutube.com/api/convert?url=https://www.youtube.com/watch?v={video_id}&format=mp3',
-                'method': 'GET'
-            }
-        ]
-        
-        for api in mp3_apis:
-            try:
-                if api['method'] == 'REDIRECT':
+        try:
+            api_url = f'https://api.vevioz.com/api/button/mp3/{video_id}'
+            res = http_session.get(api_url, headers=get_random_headers(), timeout=30)
+            if res.status_code == 200:
+                import re
+                match = re.search(r'href="(https://[^"]+\.mp3[^"]*)"', res.text)
+                if match:
+                    mp3_url = match.group(1)
                     return jsonify({
                         'success': True,
-                        'url': api['url'],
+                        'url': mp3_url,
                         'format': 'mp3',
                         'title': title,
-                        'method': 'direct_redirect'
+                        'method': 'vevioz'
                     })
-                elif api['method'] == 'POST':
-                    res = http_session.post(
-                        api['url'],
-                        json=api.get('payload', {}),
-                        headers=api.get('headers', {}),
-                        timeout=30
-                    )
-                    if res.status_code == 200:
-                        data = res.json()
-                        if data.get('url'):
-                            return jsonify({
-                                'success': True,
-                                'url': data['url'],
-                                'format': 'mp3',
-                                'title': title,
-                                'method': api['name']
-                            })
-                elif api['method'] == 'GET':
-                    res = http_session.get(
-                        api['url'],
-                        headers=get_random_headers(),
-                        timeout=30
-                    )
-                    if res.status_code == 200:
-                        data = res.json()
-                        if data.get('url'):
-                            return jsonify({
-                                'success': True,
-                                'url': data['url'],
-                                'format': 'mp3',
-                                'title': title,
-                                'method': api['name']
-                            })
-            except Exception as e:
-                print(f"Direct API {api['name']} error: {e}")
+        except Exception as e:
+            print(f"Vevioz API error: {e}")
+        
+        try:
+            api_url = f'https://api.mp3download.to/v1/convert'
+            payload = {'url': youtube_url, 'format': 'mp3'}
+            res = http_session.post(api_url, json=payload, headers={'Content-Type': 'application/json'}, timeout=30)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('download_url'):
+                    return jsonify({
+                        'success': True,
+                        'url': data['download_url'],
+                        'format': 'mp3',
+                        'title': title,
+                        'method': 'mp3download'
+                    })
+        except Exception as e:
+            print(f"MP3Download API error: {e}")
+        
+        try:
+            api_url = f'https://yt1s.io/api/ajaxSearch/index'
+            payload = {'q': youtube_url, 'vt': 'mp3'}
+            res = http_session.post(api_url, data=payload, headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }, timeout=30)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('links') and data['links'].get('mp3'):
+                    for quality, info in data['links']['mp3'].items():
+                        if info.get('k'):
+                            convert_url = 'https://yt1s.io/api/ajaxConvert/convert'
+                            convert_payload = {'vid': video_id, 'k': info['k']}
+                            conv_res = http_session.post(convert_url, data=convert_payload, timeout=60)
+                            if conv_res.status_code == 200:
+                                conv_data = conv_res.json()
+                                if conv_data.get('dlink'):
+                                    return jsonify({
+                                        'success': True,
+                                        'url': conv_data['dlink'],
+                                        'format': 'mp3',
+                                        'title': title,
+                                        'method': 'yt1s'
+                                    })
+                            break
+        except Exception as e:
+            print(f"YT1S API error: {e}")
+        
+        try:
+            api_url = f'https://tomp3.cc/api/ajax/search'
+            payload = {'query': youtube_url, 'vt': 'mp3'}
+            res = http_session.post(api_url, data=payload, timeout=30)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('url'):
+                    return jsonify({
+                        'success': True,
+                        'url': data['url'],
+                        'format': 'mp3',
+                        'title': title,
+                        'method': 'tomp3'
+                    })
+        except Exception as e:
+            print(f"ToMP3 API error: {e}")
+        
+        for instance in INVIDIOUS_INSTANCES[:5]:
+            try:
+                audio_url = f"{instance}latest_version?id={video_id}&itag=140"
+                return jsonify({
+                    'success': True,
+                    'url': audio_url,
+                    'format': 'm4a',
+                    'title': title,
+                    'method': 'invidious_audio'
+                })
+            except:
                 continue
         
-        fallback_url = f'https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128'
-        return jsonify({
-            'success': True,
-            'url': fallback_url,
-            'format': 'mp3',
-            'title': title,
-            'method': 'fallback'
-        })
+        return jsonify({'success': False, 'error': 'すべてのAPIが失敗しました。方法2をお試しください。'}), 500
             
     except Exception as e:
         print(f"Direct convert error: {e}")
