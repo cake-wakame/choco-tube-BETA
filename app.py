@@ -1803,6 +1803,116 @@ def api_convert_apify(video_id):
         print(f"Apify convert error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/convert/direct/<video_id>')
+@login_required
+def api_convert_direct(video_id):
+    """外部APIを使用して直接MP3をダウンロード（yt-dlp不使用）"""
+    target_format = request.args.get('format', 'mp3')
+    
+    try:
+        video_info = None
+        for instance in INVIDIOUS_INSTANCES[:3]:
+            try:
+                url = f"{instance}api/v1/videos/{video_id}"
+                res = http_session.get(url, headers=get_random_headers(), timeout=10)
+                if res.status_code == 200:
+                    video_info = res.json()
+                    break
+            except:
+                continue
+        
+        title = sanitize_filename(video_info.get('title', video_id)) if video_info else video_id
+        
+        mp3_apis = [
+            {
+                'name': 'cobalt',
+                'url': 'https://api.cobalt.tools/api/json',
+                'method': 'POST',
+                'payload': {
+                    'url': f'https://www.youtube.com/watch?v={video_id}',
+                    'vCodec': 'h264',
+                    'vQuality': '720',
+                    'aFormat': 'mp3',
+                    'isAudioOnly': True,
+                    'filenamePattern': 'basic'
+                },
+                'headers': {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            },
+            {
+                'name': 'y2mate',
+                'url': f'https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128',
+                'method': 'REDIRECT'
+            },
+            {
+                'name': 'ssyoutube',
+                'url': f'https://ssyoutube.com/api/convert?url=https://www.youtube.com/watch?v={video_id}&format=mp3',
+                'method': 'GET'
+            }
+        ]
+        
+        for api in mp3_apis:
+            try:
+                if api['method'] == 'REDIRECT':
+                    return jsonify({
+                        'success': True,
+                        'url': api['url'],
+                        'format': 'mp3',
+                        'title': title,
+                        'method': 'direct_redirect'
+                    })
+                elif api['method'] == 'POST':
+                    res = http_session.post(
+                        api['url'],
+                        json=api.get('payload', {}),
+                        headers=api.get('headers', {}),
+                        timeout=30
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        if data.get('url'):
+                            return jsonify({
+                                'success': True,
+                                'url': data['url'],
+                                'format': 'mp3',
+                                'title': title,
+                                'method': api['name']
+                            })
+                elif api['method'] == 'GET':
+                    res = http_session.get(
+                        api['url'],
+                        headers=get_random_headers(),
+                        timeout=30
+                    )
+                    if res.status_code == 200:
+                        data = res.json()
+                        if data.get('url'):
+                            return jsonify({
+                                'success': True,
+                                'url': data['url'],
+                                'format': 'mp3',
+                                'title': title,
+                                'method': api['name']
+                            })
+            except Exception as e:
+                print(f"Direct API {api['name']} error: {e}")
+                continue
+        
+        fallback_url = f'https://dl.y2mate.is/mates/convert?id={video_id}&format=mp3&quality=128'
+        return jsonify({
+            'success': True,
+            'url': fallback_url,
+            'format': 'mp3',
+            'title': title,
+            'method': 'fallback'
+        })
+            
+    except Exception as e:
+        print(f"Direct convert error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.after_request
 def add_header(response):
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
