@@ -29,7 +29,7 @@
 
     <div class="playlist-actions">
         {% if videos and videos|length > 0 %}
-        <a href="{{ '/watch' if vc == '1' else ('/w' if vc == '2' else ('/ume' if vc == '3' else '/edu')) }}?v={{ videos[0].id }}&list={{ playlist.id if playlist else request.args.get('list', '') }}&index=0" class="play-all-btn">
+        <a href="/watch?v={{ videos[0].id }}&list={{ playlist.id if playlist else request.args.get('list', '') }}&index=0" class="play-all-btn dynamic-play-all" data-video-id="{{ videos[0].id }}" data-list-id="{{ playlist.id if playlist else request.args.get('list', '') }}">
             ▶️ 最初から再生
         </a>
         {% endif %}
@@ -39,7 +39,7 @@
         <h2 class="section-title">動画一覧</h2>
         <div class="playlist-videos">
             {% for video in videos %}
-            <a href="{{ '/watch' if vc == '1' else ('/w' if vc == '2' else ('/ume' if vc == '3' else '/edu')) }}?v={{ video.id }}&list={{ playlist.id }}&index={{ loop.index0 }}" class="playlist-video-card">
+            <a href="/watch?v={{ video.id }}&list={{ playlist.id }}&index={{ loop.index0 }}" class="playlist-video-card dynamic-video-link" data-video-id="{{ video.id }}" data-list-id="{{ playlist.id }}" data-index="{{ loop.index0 }}">
                 <div class="playlist-video-index">{{ loop.index }}</div>
                 <div class="playlist-thumbnail-container">
                     <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="playlist-thumbnail" loading="lazy">
@@ -247,6 +247,10 @@
     margin-bottom: 24px;
 }
 
+.dynamic-video-link {
+    cursor: pointer;
+}
+
 @media (max-width: 768px) {
     .playlist-info-main {
         flex-direction: column;
@@ -267,4 +271,43 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            case '0': return '/edu';
+            default: return '/watch';
+        }
+    }
+    
+    const vc = getCookie('vc') || '1';
+    const basePath = vcToPath(vc);
+    
+    const playAllBtn = document.querySelector('.dynamic-play-all');
+    if (playAllBtn) {
+        const videoId = playAllBtn.getAttribute('data-video-id');
+        const listId = playAllBtn.getAttribute('data-list-id');
+        playAllBtn.href = basePath + '?v=' + videoId + '&list=' + listId + '&index=0';
+    }
+    
+    const videoLinks = document.querySelectorAll('a.dynamic-video-link');
+    videoLinks.forEach(function(a) {
+        const videoId = a.getAttribute('data-video-id');
+        const listId = a.getAttribute('data-list-id');
+        const index = a.getAttribute('data-index');
+        if (videoId && listId !== null) {
+            a.href = basePath + '?v=' + videoId + '&list=' + listId + '&index=' + index;
+        }
+    });
+});
+</script>
 {% endblock %}
