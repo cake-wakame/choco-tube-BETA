@@ -884,14 +884,14 @@ def blog_page():
             'category': 'お知らせ',
             'title': 'ついに公開',
             'excerpt': 'ついにチョコTubeが使えるように！',
-            'content': '<p>エラーばっかり出るって？しゃーない僕の知識じゃな…詳しくいってくれないとわからん</p><p>あとは便利ツールとかゲームとか追加したいなぁ<br>何より使ってくれたらうれしい<br>ちなみに何か意見とか聞きたいこととかあったら<a href="https://scratch.mit.edu/projects/1249572814/">ここでコメント</a>してね。</p>'
+            'content': '<p>エラーばっかり出るって？しゃーない僕の知識じゃな…詳しくいってくれないとわからん</p><p>あとは便利ツールとかゲームとか追加したいなぁ<br>何より使ってくれたらうれしい<br>ちなみに何か意見とか聞きたいこととかあったら<a href="https://scratch.mit.edu/projects/1252869725/">ここでコメント</a>してね。</p>'
         },
         {
             'date': '2025-11-30',
             'category': 'お知らせ',
             'title': 'チョコTubeへようこそ！',
             'excerpt': 'youtubeサイトを作ってみたよ～',
-            'content': '<p>まだまだ実装には時間かかる</p><p>あとはbbs(チャット)とかゲームとか追加したいなぁ<br>ちなみに何か意見とか聞きたいこととかあったら<a href="https://scratch.mit.edu/projects/1249572814/">ここでコメント</a>してね。</p>'
+            'content': '<p>まだまだ実装には時間かかる</p><p>あとはbbs(チャット)とかゲームとか追加したいなぁ<br>ちなみに何か意見とか聞きたいこととかあったら<a href="https://scratch.mit.edu/projects/1252869725/">ここでコメント</a>してね。</p>'
         }
     ]
     return render_template('blog.html', theme=theme, posts=posts)
