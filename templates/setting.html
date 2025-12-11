@@ -644,7 +644,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const searchMode = getCookie('search_mode') || 'youtube';
-    const playbackMethod = getCookie('playbackMethod') || 'stream';
+    const vcCookie = getCookie('vc');
+    const playbackMethodCookie = getCookie('playbackMethod');
+    
+    let playbackMethod;
+    if (playbackMethodCookie) {
+        playbackMethod = playbackMethodCookie;
+    } else if (vcCookie) {
+        switch(vcCookie) {
+            case '1': playbackMethod = 'stream'; break;
+            case '2': playbackMethod = 'high'; break;
+            case '3': playbackMethod = 'embed'; break;
+            case '0': playbackMethod = 'education'; break;
+            default: playbackMethod = 'stream';
+        }
+    } else {
+        playbackMethod = 'stream';
+    }
+    
     const eduSource = getCookie('edu_source') || 'siawaseok';
     const theme = getCookie('theme') || 'dark';
     
@@ -669,10 +686,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    function playbackMethodToVc(method) {
+        switch(method) {
+            case 'stream': return '1';
+            case 'high': return '2';
+            case 'embed': return '3';
+            case 'education': return '0';
+            default: return '1';
+        }
+    }
+    
+    function vcToPlaybackMethod(vc) {
+        switch(vc) {
+            case '1': return 'stream';
+            case '2': return 'high';
+            case '3': return 'embed';
+            case '0': return 'education';
+            default: return 'stream';
+        }
+    }
+    
     document.getElementById('savePlaybackBtn').addEventListener('click', function() {
         const selected = document.querySelector('input[name="playbackMethod"]:checked');
         if (selected) {
-            setCookie('playbackMethod', selected.value);
+            setCookie('playbackMethod', selected.value, 365);
+            setCookie('vc', playbackMethodToVc(selected.value), 365);
             showToast('再生設定を保存しました');
         }
     });
@@ -698,6 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm('全ての設定をリセットしますか？')) {
             setCookie('search_mode', 'youtube', 365);
             setCookie('playbackMethod', 'stream', 365);
+            setCookie('vc', '1', 365);
             setCookie('edu_source', 'siawaseok', 365);
             setCookie('theme', 'dark', 365);
             showToast('設定をリセットしました');
