@@ -19,6 +19,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const historyList = document.getElementById('historyList');
     const clearBtn = document.getElementById('clearHistoryBtn');
     
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            case '0': return '/edu';
+            default: return '/watch';
+        }
+    }
+    
     function loadHistory() {
         const history = JSON.parse(localStorage.getItem('chocoHistory') || '[]');
         
@@ -27,9 +42,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        const vc = getCookie('vc') || '1';
+        const basePath = vcToPath(vc);
+        
         let html = '';
         history.forEach(function(item, index) {
-            html += '<a href="/watch?v=' + item.id + '" class="history-item">' +
+            html += '<a href="' + basePath + '?v=' + item.id + '" class="history-item">' +
                 '<img src="https://i.ytimg.com/vi/' + item.id + '/mqdefault.jpg" alt="' + escapeHtml(item.title) + '" class="history-thumbnail">' +
                 '<div class="history-info">' +
                     '<h3 class="history-title">' + escapeHtml(item.title) + '</h3>' +
