@@ -11,7 +11,7 @@
         </h2>
         <div class="video-grid">
             {% for video in videos %}
-            <a href="/watch?v={{ video.id }}" class="video-card">
+            <a href="/watch?v={{ video.id }}" class="video-card dynamic-video-link" data-video-id="{{ video.id }}">
                 <div class="thumbnail-container">
                     <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="thumbnail" loading="lazy">
                 </div>
@@ -35,4 +35,32 @@
         </div>
     </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            case '0': return '/edu';
+            default: return '/watch';
+        }
+    }
+    
+    const vc = getCookie('vc') || '1';
+    const links = document.querySelectorAll('a.dynamic-video-link');
+    links.forEach(function(a) {
+        const videoId = a.getAttribute('data-video-id');
+        if (videoId) {
+            a.href = vcToPath(vc) + '?v=' + videoId;
+        }
+    });
+});
+</script>
 {% endblock %}
