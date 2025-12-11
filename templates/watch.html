@@ -214,7 +214,7 @@
         <div class="related-videos">
             {% if video and video.related %}
             {% for related in video.related %}
-            <a href="/watch?v={{ related.id }}" class="related-card">
+            <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ related.id }}" class="related-card dynamic-related-link" data-video-id="{{ related.id }}">
                 <div class="related-thumbnail-container">
                     <img src="/thumbnail?v={{ related.id }}" alt="{{ related.title }}" class="related-thumbnail" loading="lazy">
                     {% if related.length %}
