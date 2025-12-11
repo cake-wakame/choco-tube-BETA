@@ -850,6 +850,12 @@ def tool_page():
     theme = request.cookies.get('theme', 'dark')
     return render_template('tool.html', theme=theme)
 
+@app.route('/setting')
+@login_required
+def setting_page():
+    theme = request.cookies.get('theme', 'dark')
+    return render_template('setting.html', theme=theme, edu_sources=EDU_PARAM_SOURCES)
+
 @app.route('/history')
 @login_required
 def history_page():
