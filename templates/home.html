@@ -3,6 +3,44 @@
 {% block title %}チョコTube - ホーム{% endblock %}
 
 {% block content %}
+
+<body>
+  <div id="announcement-modal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="background: white; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; position: relative; animation: slideIn 0.3s ease;">
+    <!-- 閉じるボタン -->
+    <button onclick="document.getElementById('announcement-modal').style.display='none';" style="position: absolute; top: 12px; left: 12px; background: none; border: none; font-size: 24px; color: #555; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: #f0f0f0; transition: background 0.2s;">
+      ×
+    </button>
+    
+    <!-- お知らせ内容 -->
+    <div style="padding: 32px 24px 24px; color: #333; text-align: center;">
+      <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #007BFF;">チョコTubeについて</h2>
+      <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; text-align: left;">
+        これは私(choco-banana-)が作ったyoutube視聴サイトです<br>
+        -------------------------------------------------------------------------<br>
+        作り始めてから多くの月日が流れようやく完成しました<br><br>
+        まだまだ改善すべき点はたくさんあります。<br>
+        そのため意見などを<a href="https://scratch.mit.edu/projects/1252869725/">こちら</a>または<a href="/chat">chat</a>でどんどんお待ちしてます。<br>
+        -------------------------------------------------------------------------<br>
+        まず<a href="/setting">⚙設定</a>で/検索方法/動画の再生方法など/を決めるべし<br>
+        <br>※ダウンローダーの機能は使えません。<br>
+        外部サービスの埋め込みを押してご利用ください<br>プロキシ、ゲームを追加予定<br>-------------------------------------------------------------------------<br> <button class="back-to-downloader-btn" onclick="window.open('https://scratch.mit.edu/users/choco-banana-/', '_blank')" style="margin-left: 20px;">
+        　　©2025 choco-banana-　　　　　　　　　　　　　　　　　
+        </button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ポップアップ表示アニメーション -->
+<style>
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+
 <div class="dashboard-container">
     <div class="counter-section">
         <div class="counter-box">
@@ -40,15 +78,16 @@
     </div>
 
     <div class="quick-links">
-        <h3 class="quick-links-title">その他のツール一覧</h3>
+        <h3 class="quick-links-title">ツール一部分</h3>
         <div class="quick-links-grid">
+            <a href="/setting" class="quick-link">
+                <span class="quick-link-icon">⚙</span>
+                <span>設定</span>
+            </a>
              <a href="/downloader" class="quick-link">
                 <span class="quick-link-icon">📥</span>
                 <span>ダウンローダー</span>
             </a>
-            <a href="/getcode" class="quick-link">
-                <span class="quick-link-icon">💻</span>
-                <span>コード取得</span>
             </a>
             <a href="/history" class="quick-link">
                 <span class="quick-link-icon">📜</span>
@@ -61,10 +100,6 @@
             <a href="/blog" class="quick-link">
                 <span class="quick-link-icon">📝</span>
                 <span>ブログ</span>
-            </a>
-            <a href="/help" class="quick-link">
-                <span class="quick-link-icon">❓</span>
-                <span>ヘルプ</span>
             </a>
         </div>
     </div>
