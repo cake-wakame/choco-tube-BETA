@@ -36,7 +36,7 @@
     <div class="channel-tab-content" id="tab-videos">
         <div class="video-grid" id="video-grid">
             {% for video in videos %}
-            <a href="{{ '/watch' if vc == '1' else ('/w' if vc == '2' else ('/ume' if vc == '3' else '/edu')) }}?v={{ video.id }}" class="video-card">
+            <a href="/watch?v={{ video.id }}" class="video-card dynamic-video-link" data-video-id="{{ video.id }}">
                 <div class="thumbnail-container">
                     <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="thumbnail" loading="lazy">
                     {% if video.length %}
@@ -305,6 +305,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMoreVideos);
     }
+    
+    const vc = getCookie('vc') || '1';
+    const initialLinks = document.querySelectorAll('a.dynamic-video-link');
+    initialLinks.forEach(function(a) {
+        const videoId = a.getAttribute('data-video-id');
+        if (videoId) {
+            a.href = getVideoPath() + '?v=' + videoId;
+        }
+    });
 });
 </script>
 {% endblock %}
